@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { 
   Chart as ChartJS, 
@@ -52,7 +52,6 @@ const options: ChartOptions<'bar'> = {
   },
 };
 
-
 interface MetricCardProps {
   title: string;
   value: string;
@@ -60,15 +59,20 @@ interface MetricCardProps {
 }
 
 const MetricCard: React.FC<MetricCardProps> = ({ title, value, change }) => (
-    <div className="bg-white p-4 shadow rounded-lg">
-      <h3 className="text-gray-500 text-sm mb-1">{title}</h3>
-      <p className="text-2xl font-semibold text-gray-800">{value}</p>
-      <p className="text-sm text-green-500">
-        <ArrowUpIcon className="inline w-4 h-4 mr-1" />
-        {change}% This week
-      </p>
+  <div className="bg-white p-4 shadow rounded-lg">
+    <div className="flex items-center mb-2">
+      <div className="w-8 h-8 bg-[#FCD5B5] rounded-full flex items-center justify-center mr-2">
+        <div className="w-4 h-4 bg-[#E68A4E] rounded-full"></div>
+      </div>
+      <h3 className="text-gray-500 text-sm">{title}</h3>
     </div>
-  );
+    <p className="text-2xl font-semibold text-gray-800 mb-1">{value}</p>
+    <p className="text-sm text-green-500 flex items-center">
+      <ArrowUpIcon className="w-4 h-4 mr-1" />
+      {change}% This week
+    </p>
+  </div>
+);
 
 interface ActiveUserItemProps {
   label: string;
@@ -77,18 +81,17 @@ interface ActiveUserItemProps {
 }
 
 const ActiveUserItem: React.FC<ActiveUserItemProps> = ({ label, value, change }) => (
-    <div className="flex justify-between items-center">
-      <span className="text-gray-900 font-semibold">{label}</span> {/* Darker color and bold for label */}
-      <div className="text-right">
-        <p className="font-bold text-gray-900">{value}</p> {/* Darker color and bold for value */}
-        
-        <p className={`text-sm ${change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-          {change >= 0 ? <ArrowUpIcon className="inline w-3 h-3 mr-1" /> : <ArrowDownIcon className="inline w-3 h-3 mr-1" />}
-          {Math.abs(change)}%
-        </p>
-      </div>
+  <div className="flex justify-between items-center">
+    <span className="text-gray-900 font-semibold">{label}</span>
+    <div className="text-right">
+      <p className="font-bold text-gray-900">{value}</p>
+      <p className={`text-sm ${change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+        {change >= 0 ? <ArrowUpIcon className="inline w-3 h-3 mr-1" /> : <ArrowDownIcon className="inline w-3 h-3 mr-1" />}
+        {Math.abs(change)}%
+      </p>
     </div>
-  );
+  </div>
+);
 
 interface OrderRowProps {
   id: string;
@@ -107,18 +110,14 @@ const OrderRow: React.FC<OrderRowProps> = ({ id, date, product, quantity, price,
     <td className="pb-2 text-gray-700">{quantity}</td>
     <td className="pb-2 text-gray-700">{price}</td>
     <td className="py-2">
-  <span className={`px-2 py-1 rounded text-xs font-bold text-white ${
-    status === 'Delivered' ? 'bg-green-800' :
-    status === 'Returned' ? 'bg-red-800' :
-    'bg-yellow-800'
-  }`}>
-    {status}
-  </span>
-</td>
-
-
-
-
+      <span className={`px-2 py-1 rounded text-xs font-bold text-white ${
+        status === 'Delivered' ? 'bg-green-800' :
+        status === 'Returned' ? 'bg-red-800' :
+        'bg-yellow-800'
+      }`}>
+        {status}
+      </span>
+    </td>
   </tr>
 );
 
@@ -129,18 +128,17 @@ interface PopularProductProps {
 }
 
 const PopularProduct: React.FC<PopularProductProps> = ({ name, brand, change }) => (
-    <div className="flex justify-between items-center">
-      <div>
-        <p className="font-semibold text-gray-900">{name}</p> {/* Dark color for product name */}
-        <p className="text-sm text-gray-800">{brand}</p> {/* Darker color for brand */}
-      </div>
-      <p className="text-sm text-green-500">
-        <ArrowUpIcon className="inline w-3 h-3 mr-1" />
-        {change}%
-      </p>
+  <div className="flex justify-between items-center">
+    <div>
+      <p className="font-semibold text-gray-900">{name}</p>
+      <p className="text-sm text-gray-800">{brand}</p>
     </div>
-  );
-  
+    <p className="text-sm text-green-500">
+      <ArrowUpIcon className="inline w-3 h-3 mr-1" />
+      {change}%
+    </p>
+  </div>
+);
 
 interface NotificationProps {
   text: string;
@@ -154,7 +152,48 @@ const Notification: React.FC<NotificationProps> = ({ text, time }) => (
   </div>
 );
 
+interface TabSelectorProps {
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+}
+
+const TabSelector: React.FC<TabSelectorProps> = ({ activeTab, setActiveTab }) => {
+  const tabs = ['Orders', 'Users', 'Pending Tasks'];
+  return (
+    <div className="flex border-b">
+      {tabs.map((tab) => (
+        <button
+          key={tab}
+          className={`py-2 px-4 ${activeTab === tab ? 'border-b-2 border-[#E68A4E] text-[#E68A4E]' : 'text-gray-500'}`}
+          onClick={() => setActiveTab(tab)}
+        >
+          {tab}
+        </button>
+      ))}
+    </div>
+  );
+};
+
+interface ChartLabelProps {
+  color: string;
+  label: string;
+}
+
+const ChartLabel: React.FC<ChartLabelProps> = ({ color, label }) => (
+  <div className="flex items-center">
+    <div className={`w-3 h-3 rounded-full mr-2`} style={{ backgroundColor: color }}></div>
+    <span className="text-sm text-gray-600">{label}</span>
+  </div>
+);
+
+
 const Dashboard: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('Orders');
+  const [selectedYear, setSelectedYear] = useState('Year');
+  const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false);
+
+  const years = ['2021', '2022', '2023', '2024'];
+
   return (
     <div className="p-6 bg-[#FFF8F3]">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
@@ -167,35 +206,57 @@ const Dashboard: React.FC = () => {
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow">
           <div className="flex justify-between items-center mb-4">
-          <div>
-      <h2 className="text-xl font-bold text-gray-800">Report & Analytics</h2>
-      <p className="text-sm text-gray-500">Lorem ipsum dolor sit amet consectetur.</p>
-      
-      {/* Flex container for Orders, Users, and Pending Tasks */}
-      <div className="flex items-center space-x-4">
-        <p className="text-sm text-gray-500 font-bold">Orders</p> {/* Make Orders bold */}
-        <a href="/users" className="text-sm text-gray-500 hover:text-gray-800">
-          Users
-        </a>
-        <a href="/pending-tasks" className="text-sm text-gray-500 hover:text-gray-800">
-          Pending Tasks
-        </a>
-      </div>
-    </div>
-            
-            <div className="flex items-center">
-              <select className="mr-2 p-2 border rounded">
-                <option>Year</option>
-              </select>
-              <button className="bg-[#E68A4E] text-white px-4 py-2 rounded">Download Report</button>
+            <div>
+              <h2 className="text-xl font-bold text-gray-800">Report & Analytics</h2>
+              <p className="text-sm text-gray-500">Lorem ipsum dolor sit amet consectetur.</p>
             </div>
+            <div className="flex items-center">
+      <div className="relative mr-2">
+        <button 
+          className="bg-[#E68A4E] border rounded p-2 pr-8 cursor-pointer flex items-center"
+          onClick={() => setIsYearDropdownOpen(!isYearDropdownOpen)}
+        >
+          <span className="mr-2 font-bold text-white">{selectedYear}</span> {/* Display selected year in bold and white */}
+          <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+          </svg>
+        </button>
+        
+        {isYearDropdownOpen && (
+          <div className="absolute top-full left-0 mt-1 w-full bg-white border rounded shadow-lg z-10">
+            {years.map(year => (
+              <div 
+                key={year} 
+                className="p-2 hover:bg-gray-200 cursor-pointer font-bold text-[#E68A4E]" // Year options in bold and a contrasting color
+                onClick={() => {
+                  setSelectedYear(year); // Set the selected year
+                  setIsYearDropdownOpen(false); // Close the dropdown
+                }}
+              >
+                {year}
+              </div>
+            ))}
           </div>
+        )}
+      </div>
+
+      <button className="bg-[#E68A4E] text-white px-4 py-2 rounded">Download Report</button>
+    </div>
+
+
+
+          </div>
+          <TabSelector activeTab={activeTab} setActiveTab={setActiveTab} />
           <Bar data={data} options={options} />
+          <div className="mt-4 flex justify-center space-x-8">
+            <ChartLabel color="#E68A4E" label="Total Order" />
+            <ChartLabel color="#FCD5B5" label="Gross Profit" />
+          </div>
         </div>
         
         <div className="bg-white p-6 rounded-lg shadow">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">Active users</h3>
-        <h3 className="text-lg font-bold text-gray-900 mb-4">Number of active users</h3>
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Active users</h3>
+          <h4 className="text-md font-semibold text-gray-700 mb-4">Number of active users</h4>
           <div className="space-y-4">
             <ActiveUserItem label="Vendors" value="500,000" change={20} />
             <ActiveUserItem label="Artisans" value="300,000" change={0.5} />
@@ -205,34 +266,30 @@ const Dashboard: React.FC = () => {
           <div className="mt-6">
             <h4 className="text-lg font-bold text-gray-900 mb-4">Website visit</h4>
             <div className="flex justify-between">
-  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => {
-    // Adjust heights for each day to vary distinctly
-    const heights = [50, 80, 90, 100, 120, 70, 60]; // Sample heights in pixels
-    const heightPercentage = heights[index];
-    const percentage = ((heightPercentage / 120) * 100).toFixed(0); // Convert height to percentage based on max height (120px in this case)
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => {
+                const heights = [50, 80, 90, 100, 120, 70, 60];
+                const heightPercentage = heights[index];
+                const percentage = ((heightPercentage / 120) * 100).toFixed(0);
 
-    return (
-      <div key={day} className="text-center">
-        <div 
-          className={`w-6 ${index === 4 ? 'bg-[#E68A4E]' : 'bg-[#FCD5B5]'}`} 
-          style={{ height: `${heightPercentage}px` }} // Height based on the values in the heights array
-        />
-        <p className="text-xs mt-1 text-gray-900">{day}</p> {/* Day label below the bar */}
-        <p className="text-xs text-gray-900">{percentage}%</p> {/* Percentage text below the day label */}
-      </div>
-    );
-  })}
-</div>
-
-
-
+                return (
+                  <div key={day} className="text-center">
+                    <div 
+                      className={`w-6 ${index === 4 ? 'bg-[#E68A4E]' : 'bg-[#FCD5B5]'}`} 
+                      style={{ height: `${heightPercentage}px` }}
+                    />
+                    <p className="text-xs mt-1 text-gray-900">{day}</p>
+                    <p className="text-xs text-gray-900">{percentage}%</p>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
       
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow">
-        <h3 className="text-lg font-semibold mb-4 text-gray-900">Recent Order</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-900">Recent Order</h3>
           <table className="w-full">
             <thead>
               <tr className="text-left text-gray-900">
@@ -255,23 +312,21 @@ const Dashboard: React.FC = () => {
         </div>
         
         <div className="bg-white p-6 rounded-lg shadow">
-  <h3 className="text-lg font-semibold mb-4 text-gray-900">Most popular products</h3> {/* Darker color for heading */}
-  <div className="space-y-4">
-    <PopularProduct name="Hoodies" brand="Chubbies x Blackbones" change={7} />
-    <PopularProduct name="Snapbacks" brand="Chubbies x Blackbones" change={7} />
-    <PopularProduct name="Stickers" brand="Chubbies x Blackbones" change={7} />
-  </div>
-  <div className="mt-6">
-    <h4 className="text-sm font-semibold mb-2 text-gray-900">Notifications</h4> {/* Darker color for subheading */}
-    <div className="space-y-2">
-      <Notification text="New order received" time="3 hours ago" />
-      <Notification text="Customer canceled order #1234" time="5 hours ago" />
-      <Notification text="New user registered" time="1 day ago" />
-    </div>
-  </div>
-</div>
-
-
+          <h3 className="text-lg font-semibold mb-4 text-gray-900">Most popular products</h3>
+          <div className="space-y-4">
+            <PopularProduct name="Hoodies" brand="Chubbies x Blackbones" change={7} />
+            <PopularProduct name="Snapbacks" brand="Chubbies x Blackbones" change={7} />
+            <PopularProduct name="Stickers" brand="Chubbies x Blackbones" change={7} />
+          </div>
+          <div className="mt-6">
+            <h4 className="text-sm font-semibold mb-2 text-gray-900">Notifications</h4>
+            <div className="space-y-2">
+              <Notification text="New order received" time="3 hours ago" />
+              <Notification text="Customer canceled order #1234" time="5 hours ago" />
+              <Notification text="New user registered" time="1 day ago" />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
