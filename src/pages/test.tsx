@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TrendingUp, ArrowUp, ArrowDown, DollarSign, BookOpen, Users, FileText } from "lucide-react";
+import { TrendingUp, ArrowUp, ArrowDown } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import {
   Card,
@@ -19,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-
 const chartData = [
   { name: 'Jan', totalOrder: 1500, grossProfit: 800 },
   { name: 'Feb', totalOrder: 1700, grossProfit: 1600 },
@@ -35,31 +34,27 @@ const chartData = [
   { name: 'Dec', totalOrder: 1500, grossProfit: 1650 },
 ];
 
-
 interface MetricCardProps {
-  title: string;
-  value: string;
-  change: number;
-  icon: React.ReactNode;
-}
-
-const MetricCard: React.FC<MetricCardProps> = ({ title, value, change, icon }) => (
-  <Card>
-    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-      <CardTitle className="text-sm font-medium">{title}</CardTitle>
-      <div className="w-8 h-8 bg-[#FFF1E6] rounded-full flex items-center justify-center">
-        {icon}
-      </div>
-    </CardHeader>
-    <CardContent>
-      <div className="text-2xl font-bold">{value}</div>
-      <p className="text-xs text-muted-foreground">
-        <TrendingUp className="mr-1 h-4 w-4 text-green-500 inline" />
-        <span className="text-green-500">{change}% This week</span>
-      </p>
-    </CardContent>
-  </Card>
-);
+    title: string;
+    value: string;
+    change: number;
+  }
+  
+  const MetricCard: React.FC<MetricCardProps> = ({ title, value, change }) => (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <div className="w-4 h-4 bg-[#E68A4E] rounded-full" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+        <p className="text-xs text-muted-foreground">
+          <TrendingUp className="mr-1 h-4 w-4 text-green-500" />
+          <span className="text-green-500">{change}% This week</span>
+        </p>
+      </CardContent>
+    </Card>
+  );
   
   interface ActiveUserItemProps {
     label: string;
@@ -153,15 +148,15 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, change, icon }) =
   
   const Dashboard: React.FC = () => {
     const [selectedYear, setSelectedYear] = useState('2024');
-  
-    return (
-      <div className="p-6 bg-[#FFF8F3]">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
-          <MetricCard title="Total sales" value="500,000" change={5} icon={<DollarSign className="text-[#E68A4E]" />} />
-          <MetricCard title="Comics uploaded" value="5" change={5} icon={<BookOpen className="text-[#E68A4E]" />} />
-          <MetricCard title="Pending tasks" value="15" change={5} icon={<FileText className="text-[#E68A4E]" />} />
-          <MetricCard title="Total Revenue" value="₦ 2,843,632" change={5} icon={<DollarSign className="text-[#E68A4E]" />} />
-        </div>
+
+  return (
+    <div className="p-6 bg-[#FFF8F3]">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+        <MetricCard title="Total No of Fans" value="500,000" change={6} />
+        <MetricCard title="Total No of Artisans" value="128,540" change={6} />
+        <MetricCard title="Total No of Brands" value="58,540" change={6} />
+        <MetricCard title="Total Revenue" value="₦ 2,843,632" change={6} />
+      </div>
       
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
