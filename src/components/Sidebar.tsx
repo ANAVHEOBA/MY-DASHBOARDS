@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Home, Users, Tag, UserCheck, Store, Award, FileText, DollarSign, BarChart2, Bell, LogOut, LucideIcon } from 'lucide-react';
+import { Home, Users, UserCheck, BarChart2, Settings, LogOut, LucideIcon } from 'lucide-react'; // Import necessary icons
+import { useNavigate } from 'react-router-dom';
 
 interface NavItemProps {
   Icon: LucideIcon;
@@ -8,41 +9,27 @@ interface NavItemProps {
   onClick: () => void;
 }
 
-interface MenuItem {
-  icon: LucideIcon;
-  text: string;
-}
-
 const Sidebar: React.FC = () => {
   const [activeItem, setActiveItem] = useState<string>('Dashboard');
+  const navigate = useNavigate(); // Use useNavigate to programmatically navigate
 
-  const menuItems: MenuItem[] = [
-    { icon: Home, text: 'Dashboard' },
-    { icon: Users, text: 'Fans' },
-    { icon: Tag, text: 'Brands' },
-    { icon: UserCheck, text: 'Artisan' },
-    { icon: Store, text: 'Vendor' },
-    { icon: Award, text: 'Challenges' },
-    { icon: FileText, text: 'Comics' },
-    { icon: DollarSign, text: 'Payment' },
-    { icon: BarChart2, text: 'Reports and Analytics' },
-    { icon: Bell, text: 'Inbox & Notifications' },
+  const menuItems = [
+    { icon: Home, text: 'Dashboard', path: '/' },
+    { icon: Users, text: 'Users', path: '/users' },
+    { icon: UserCheck, text: 'Listeners', path: '/listeners' },
+    { icon: LogOut, text: 'Sessions', path: '/sessions' },
+    { icon: BarChart2, text: 'Analytics', path: '/analytics' },
+    { icon: Settings, text: 'Settings', path: '/settings' },
   ];
 
   return (
     <div className="w-64 h-screen bg-white flex flex-col shadow-lg">
-      {/* tella Logo */}
-      <div className="bg-[#CF7D2C] p-4">
-        <h1 className="text-white text-3xl font-extrabold tracking-wider" style={{
-          textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-          fontFamily: '"Arial Black", Gadget, sans-serif',
-          letterSpacing: '0.1em',
-        }}>
+      <div className="bg-[#007BFF] p-4"> {/* Blue background for the header */}
+        <h1 className="text-white text-3xl font-extrabold tracking-wider">
           TESLA
         </h1>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-grow overflow-y-auto">
         <ul className="space-y-1 p-2">
           {menuItems.map((item) => (
@@ -51,13 +38,15 @@ const Sidebar: React.FC = () => {
               Icon={item.icon}
               text={item.text}
               active={activeItem === item.text}
-              onClick={() => setActiveItem(item.text)}
+              onClick={() => {
+                setActiveItem(item.text);
+                navigate(item.path); // Navigate to the selected path
+              }}
             />
           ))}
         </ul>
       </nav>
 
-      {/* Logout Button */}
       <button className="flex items-center p-4 hover:bg-gray-100">
         <LogOut size={20} className="text-gray-600 mr-3" />
         <span className="text-gray-600">Logout</span>
@@ -71,10 +60,10 @@ const NavItem: React.FC<NavItemProps> = ({ Icon, text, active, onClick }) => {
     <li
       onClick={onClick}
       className={`flex items-center py-2 px-3 rounded-lg cursor-pointer ${
-        active ? 'bg-[#FFF5ED] text-[#CF7D2C]' : 'text-gray-600 hover:bg-gray-100'
-      }`}
+        active ? 'bg-[#D0E4FF] text-[#007BFF]' : 'text-gray-600 hover:bg-gray-100'
+      }`} // Active item styling
     >
-      <Icon size={20} className={active ? 'text-[#CF7D2C]' : 'text-gray-400'} />
+      <Icon size={20} className={active ? 'text-[#007BFF]' : 'text-gray-400'} />
       <span className="ml-3">{text}</span>
     </li>
   );
