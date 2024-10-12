@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TrendingUp, ArrowUp, ArrowDown, DollarSign, BookOpen, Users, FileText } from "lucide-react";
+import { TrendingUp, ArrowUp, ArrowDown, DollarSign, BookOpen,  FileText } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import {
   Card,
