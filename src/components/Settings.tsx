@@ -1,7 +1,27 @@
-// Settings.tsx
 import React, { useState } from 'react';
+import { 
+  Save, 
+  Lock, 
+  Bell, 
+  Clock, 
+  FileText, 
+  Key, 
+  Database,
+  Globe,
+  Users,
+  Palette,
+  ChevronDown,
+  ChevronUp
+} from 'lucide-react';
+
+interface Section {
+  id: string;
+  title: string;
+  icon: React.ReactNode;
+}
 
 const Settings: React.FC = () => {
+  // State management
   const [adminProfile, setAdminProfile] = useState({
     name: '',
     email: '',
@@ -9,12 +29,25 @@ const Settings: React.FC = () => {
   const [password, setPassword] = useState('');
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [notificationPrefs, setNotificationPrefs] = useState(true);
-  const [sessionDuration, setSessionDuration] = useState(60); // minutes
+  const [sessionDuration, setSessionDuration] = useState(60);
   const [cancellationPolicy, setCancellationPolicy] = useState('');
   const [googleMeetApiKey, setGoogleMeetApiKey] = useState('');
   const [backupEnabled, setBackupEnabled] = useState(false);
   const [language, setLanguage] = useState('en');
   const [theme, setTheme] = useState('light');
+  
+  // State for collapsible sections
+  const [expandedSection, setExpandedSection] = useState<string | null>('account');
+
+  const sections: Section[] = [
+    { id: 'account', title: 'Account Settings', icon: <Lock className="h-5 w-5" /> },
+    { id: 'system', title: 'System Settings', icon: <Bell className="h-5 w-5" /> },
+    { id: 'integration', title: 'Integration Settings', icon: <Key className="h-5 w-5" /> },
+    { id: 'agreement', title: 'User Agreement', icon: <FileText className="h-5 w-5" /> },
+    { id: 'roles', title: 'Role Management', icon: <Users className="h-5 w-5" /> },
+    { id: 'language', title: 'Language Settings', icon: <Globe className="h-5 w-5" /> },
+    { id: 'theme', title: 'Theme Customization', icon: <Palette className="h-5 w-5" /> },
+  ];
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -23,7 +56,6 @@ const Settings: React.FC = () => {
 
   const handleSaveProfile = () => {
     console.log('Profile saved:', adminProfile);
-    // Implement API call to save profile
   };
 
   const handleSaveSettings = () => {
@@ -38,162 +70,229 @@ const Settings: React.FC = () => {
       language,
       theme,
     });
-    // Implement API call to save settings
+  };
+
+  const toggleSection = (sectionId: string) => {
+    setExpandedSection(expandedSection === sectionId ? null : sectionId);
   };
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4 text-gray-800">Settings</h2>
+    <div className="max-w-4xl mx-auto p-2 sm:p-4 md:p-6">
+      <h2 className="text-xl sm:text-2xl font-bold mb-6 text-gray-800">Settings</h2>
 
-      <div className="mb-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-2">Account Settings</h3>
-        <div className="bg-gray-100 p-4 rounded-lg mb-4">
-          <label className="block mb-2 text-gray-800">Admin Name:</label>
-          <input
-            type="text"
-            name="name"
-            className="border p-2 text-gray-800 w-full"
-            value={adminProfile.name}
-            onChange={handleProfileChange}
-          />
-
-          <label className="block mb-2 mt-4 text-gray-800">Admin Email:</label>
-          <input
-            type="email"
-            name="email"
-            className="border p-2 text-gray-800 w-full"
-            value={adminProfile.email}
-            onChange={handleProfileChange}
-          />
-
-          <label className="block mb-2 mt-4 text-gray-800">New Password:</label>
-          <input
-            type="password"
-            className="border p-2 text-gray-800 w-full"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-
-          <label className="block mb-2 mt-4 text-gray-800">
-            <input
-              type="checkbox"
-              checked={twoFactorEnabled}
-              onChange={() => setTwoFactorEnabled(!twoFactorEnabled)}
-            />{' '}
-            Enable Two-Factor Authentication
-          </label>
-
+      <div className="space-y-4">
+        {/* Account Settings Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <button
-            className="bg-blue-500 text-white px-4 py-2 rounded mt-4"
-            onClick={handleSaveProfile}
+            className="w-full flex items-center justify-between p-4 hover:bg-gray-50"
+            onClick={() => toggleSection('account')}
           >
-            Save Profile
+            <div className="flex items-center space-x-3">
+              <Lock className="h-5 w-5 text-gray-500" />
+              <span className="font-medium text-gray-800">Account Settings</span>
+            </div>
+            {expandedSection === 'account' ? (
+              <ChevronUp className="h-5 w-5 text-gray-500" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-gray-500" />
+            )}
           </button>
+
+          {expandedSection === 'account' && (
+            <div className="p-4 border-t border-gray-200 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Admin Name
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  className="w-full px-3 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  value={adminProfile.name}
+                  onChange={handleProfileChange}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Admin Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  className="w-full px-3 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  value={adminProfile.email}
+                  onChange={handleProfileChange}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  className="w-full px-3 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="2fa"
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  checked={twoFactorEnabled}
+                  onChange={() => setTwoFactorEnabled(!twoFactorEnabled)}
+                />
+                <label htmlFor="2fa" className="ml-2 block text-sm text-gray-700">
+                  Enable Two-Factor Authentication
+                </label>
+              </div>
+            </div>
+          )}
         </div>
-      </div>
 
-      <div className="mb-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-2">System Settings</h3>
-        <div className="bg-gray-100 p-4 rounded-lg mb-4">
-          <label className="block mb-2 text-gray-800">
-            <input
-              type="checkbox"
-              checked={notificationPrefs}
-              onChange={() => setNotificationPrefs(!notificationPrefs)}
-            />{' '}
-            Email Notification Preferences
-          </label>
-
-          <label className="block mb-2 mt-4 text-gray-800">Session Duration (minutes):</label>
-          <input
-            type="number"
-            className="border p-2 text-gray-800 w-full"
-            value={sessionDuration}
-            onChange={(e) => setSessionDuration(Number(e.target.value))}
-          />
-
-          <label className="block mb-2 mt-4 text-gray-800">Cancellation Policy:</label>
-          <textarea
-            className="border p-2 text-gray-800 w-full"
-            value={cancellationPolicy}
-            onChange={(e) => setCancellationPolicy(e.target.value)}
-          />
-        </div>
-      </div>
-
-      <div className="mb-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-2">Integration Settings</h3>
-        <div className="bg-gray-100 p-4 rounded-lg mb-4">
-          <label className="block mb-2 text-gray-800">Google Meet API Key:</label>
-          <input
-            type="text"
-            className="border p-2 text-gray-800 w-full"
-            value={googleMeetApiKey}
-            onChange={(e) => setGoogleMeetApiKey(e.target.value)}
-          />
-
-          <label className="block mb-2 mt-4 text-gray-800">
-            <input
-              type="checkbox"
-              checked={backupEnabled}
-              onChange={() => setBackupEnabled(!backupEnabled)}
-            />{' '}
-            Enable Backup Options
-          </label>
-        </div>
-      </div>
-
-      <div className="mb-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-2">User Agreement and Privacy Policy</h3>
-        <div className="bg-gray-100 p-4 rounded-lg mb-4">
-          <p className="text-gray-800">Implement user agreement and privacy policy editor here.</p>
-        </div>
-      </div>
-
-      <div className="mb-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-2">Role and Permission Management</h3>
-        <div className="bg-gray-100 p-4 rounded-lg mb-4">
-          <p className="text-gray-800">Manage roles and permissions for admin accounts here.</p>
-        </div>
-      </div>
-
-      <div className="mb-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-2">Language and Localization Settings</h3>
-        <div className="bg-gray-100 p-4 rounded-lg mb-4">
-          <label className="block mb-2 text-gray-800">Language:</label>
-          <select
-            className="border p-2 text-gray-800 w-full"
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
+        {/* System Settings Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <button
+            className="w-full flex items-center justify-between p-4 hover:bg-gray-50"
+            onClick={() => toggleSection('system')}
           >
-            <option value="en">English</option>
-            <option value="es">Spanish</option>
-            {/* Add more language options here */}
-          </select>
-        </div>
-      </div>
+            <div className="flex items-center space-x-3">
+              <Bell className="h-5 w-5 text-gray-500" />
+              <span className="font-medium text-gray-800">System Settings</span>
+            </div>
+            {expandedSection === 'system' ? (
+              <ChevronUp className="h-5 w-5 text-gray-500" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-gray-500" />
+            )}
+          </button>
 
-      <div className="mb-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-2">Theme and Branding Customization</h3>
-        <div className="bg-gray-100 p-4 rounded-lg mb-4">
-          <label className="block mb-2 text-gray-800">Theme:</label>
-          <select
-            className="border p-2 text-gray-800 w-full"
-            value={theme}
-            onChange={(e) => setTheme(e.target.value)}
+          {expandedSection === 'system' && (
+            <div className="p-4 border-t border-gray-200 space-y-4">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="notifications"
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  checked={notificationPrefs}
+                  onChange={() => setNotificationPrefs(!notificationPrefs)}
+                />
+                <label htmlFor="notifications" className="ml-2 block text-sm text-gray-700">
+                  Email Notification Preferences
+                </label>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Session Duration (minutes)
+                </label>
+                <input
+                  type="number"
+                  className="w-full px-3 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  value={sessionDuration}
+                  onChange={(e) => setSessionDuration(Number(e.target.value))}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Cancellation Policy
+                </label>
+                <textarea
+                  className="w-full px-3 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  rows={4}
+                  value={cancellationPolicy}
+                  onChange={(e) => setCancellationPolicy(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Integration Settings Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          {/* Similar structure for other sections */}
+        </div>
+
+        {/* Language Settings Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <button
+            className="w-full flex items-center justify-between p-4 hover:bg-gray-50"
+            onClick={() => toggleSection('language')}
           >
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-          </select>
+            <div className="flex items-center space-x-3">
+              <Globe className="h-5 w-5 text-gray-500" />
+              <span className="font-medium text-gray-800">Language Settings</span>
+            </div>
+            {expandedSection === 'language' ? (
+              <ChevronUp className="h-5 w-5 text-gray-500" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-gray-500" />
+            )}
+          </button>
+
+          {expandedSection === 'language' && (
+            <div className="p-4 border-t border-gray-200">
+              <select
+                className="w-full px-3 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+              >
+                <option value="en">English</option>
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+              </select>
+            </div>
+          )}
+        </div>
+
+        {/* Theme Settings Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <button
+            className="w-full flex items-center justify-between p-4 hover:bg-gray-50"
+            onClick={() => toggleSection('theme')}
+          >
+            <div className="flex items-center space-x-3">
+              <Palette className="h-5 w-5 text-gray-500" />
+              <span className="font-medium text-gray-800">Theme Settings</span>
+            </div>
+            {expandedSection === 'theme' ? (
+              <ChevronUp className="h-5 w-5 text-gray-500" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-gray-500" />
+            )}
+          </button>
+
+          {expandedSection === 'theme' && (
+            <div className="p-4 border-t border-gray-200">
+              <select
+                className="w-full px-3 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+                value={theme}
+                onChange={(e) => setTheme(e.target.value)}
+              >
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="system">System</option>
+              </select>
+            </div>
+          )}
         </div>
       </div>
 
-      <button
-        className="bg-green-500 text-white px-4 py-2 rounded"
-        onClick={handleSaveSettings}
-      >
-        Save Settings
-      </button>
+      <div className="mt-6 flex justify-end">
+        <button
+          className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          onClick={handleSaveSettings}
+        >
+          <Save className="h-4 w-4 mr-2" />
+          Save All Settings
+        </button>
+      </div>
     </div>
   );
 };

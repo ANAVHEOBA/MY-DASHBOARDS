@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, Users, UserCheck, BarChart2, Settings, LogOut, LucideIcon } from 'lucide-react'; // Import necessary icons
+import { Home, Users, UserCheck, BarChart2, Settings, LogOut, Menu, X, LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface NavItemProps {
@@ -7,11 +7,14 @@ interface NavItemProps {
   text: string;
   active: boolean;
   onClick: () => void;
+  collapsed?: boolean;
 }
 
 const Sidebar: React.FC = () => {
   const [activeItem, setActiveItem] = useState<string>('Dashboard');
-  const navigate = useNavigate(); // Use useNavigate to programmatically navigate
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const navigate = useNavigate();
 
   const menuItems = [
     { icon: Home, text: 'Dashboard', path: '/' },
@@ -22,49 +25,108 @@ const Sidebar: React.FC = () => {
     { icon: Settings, text: 'Settings', path: '/settings' },
   ];
 
+  const handleNavigation = (path: string, text: string) => {
+    setActiveItem(text);
+    navigate(path);
+    setIsMobileMenuOpen(false);
+  };
+
   return (
-    <div className="w-64 h-screen bg-white flex flex-col shadow-lg">
-      <div className="bg-[#007BFF] p-4"> {/* Blue background for the header */}
-        <h1 className="text-white text-3xl font-extrabold tracking-wider">
-          TESLA
-        </h1>
-      </div>
-
-      <nav className="flex-grow overflow-y-auto">
-        <ul className="space-y-1 p-2">
-          {menuItems.map((item) => (
-            <NavItem
-              key={item.text}
-              Icon={item.icon}
-              text={item.text}
-              active={activeItem === item.text}
-              onClick={() => {
-                setActiveItem(item.text);
-                navigate(item.path); // Navigate to the selected path
-              }}
-            />
-          ))}
-        </ul>
-      </nav>
-
-      <button className="flex items-center p-4 hover:bg-gray-100">
-        <LogOut size={20} className="text-gray-600 mr-3" />
-        <span className="text-gray-600">Logout</span>
+    <>
+      {/* Mobile Menu Button */}
+      <button
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-white shadow-md"
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+      >
+        {isMobileMenuOpen ? (
+          <X size={24} className="text-gray-600" />
+        ) : (
+          <Menu size={24} className="text-gray-600" />
+        )}
       </button>
-    </div>
+
+      {/* Overlay for mobile menu */}
+      {isMobileMenuOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar Container */}
+      <div
+        className={`
+          fixed lg:static
+          h-screen
+          bg-white
+          shadow-lg
+          transition-all
+          duration-300
+          z-50
+          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          ${isCollapsed ? 'w-20' : 'w-64'}
+        `}
+      >
+        {/* Header */}
+        <div className="bg-[#007BFF] p-4 flex items-center justify-between">
+          <h1 className={`text-white font-extrabold tracking-wider ${isCollapsed ? 'text-xl' : 'text-3xl'}`}>
+            {isCollapsed ? 'T' : 'TESLA'}
+          </h1>
+          <button
+            className="hidden lg:block text-white"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+          >
+            {isCollapsed ? (
+              <Menu size={20} />
+            ) : (
+              <X size={20} />
+            )}
+          </button>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-grow overflow-y-auto">
+          <ul className="space-y-1 p-2">
+            {menuItems.map((item) => (
+              <NavItem
+                key={item.text}
+                Icon={item.icon}
+                text={item.text}
+                active={activeItem === item.text}
+                collapsed={isCollapsed}
+                onClick={() => handleNavigation(item.path, item.text)}
+              />
+            ))}
+          </ul>
+        </nav>
+
+        {/* Logout Button */}
+        <button 
+          className={`
+            flex items-center p-4 hover:bg-gray-100 w-full
+            ${isCollapsed ? 'justify-center' : ''}
+          `}
+        >
+          <LogOut size={20} className="text-gray-600" />
+          {!isCollapsed && <span className="text-gray-600 ml-3">Logout</span>}
+        </button>
+      </div>
+    </>
   );
 };
 
-const NavItem: React.FC<NavItemProps> = ({ Icon, text, active, onClick }) => {
+const NavItem: React.FC<NavItemProps> = ({ Icon, text, active, onClick, collapsed }) => {
   return (
     <li
       onClick={onClick}
-      className={`flex items-center py-2 px-3 rounded-lg cursor-pointer ${
-        active ? 'bg-[#D0E4FF] text-[#007BFF]' : 'text-gray-600 hover:bg-gray-100'
-      }`} // Active item styling
+      className={`
+        flex items-center py-2 px-3 rounded-lg cursor-pointer
+        ${active ? 'bg-[#D0E4FF] text-[#007BFF]' : 'text-gray-600 hover:bg-gray-100'}
+        ${collapsed ? 'justify-center' : ''}
+      `}
     >
       <Icon size={20} className={active ? 'text-[#007BFF]' : 'text-gray-400'} />
-      <span className="ml-3">{text}</span>
+      {!collapsed && <span className="ml-3">{text}</span>}
     </li>
   );
 };

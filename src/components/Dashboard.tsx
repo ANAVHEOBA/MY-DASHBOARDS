@@ -1,5 +1,17 @@
 import React, { useState } from 'react';
-import { TrendingUp, ArrowUp, ArrowDown, DollarSign, BookOpen,  FileText } from "lucide-react";
+import { 
+  TrendingUp, 
+  ArrowUp, 
+  ArrowDown, 
+  Users, 
+  UserCheck, 
+  Calendar,
+  BarChart2,
+  Clock,
+  User,
+  Headphones,
+  Video
+} from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import {
   Card,
@@ -19,23 +31,18 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-
+// Sample data for the analytics chart
 const chartData = [
-  { name: 'Jan', totalOrder: 1500, grossProfit: 800 },
-  { name: 'Feb', totalOrder: 1700, grossProfit: 1600 },
-  { name: 'Mar', totalOrder: 1400, grossProfit: 1500 },
-  { name: 'Apr', totalOrder: 1600, grossProfit: 1550 },
-  { name: 'May', totalOrder: 1400, grossProfit: 1700 },
-  { name: 'Jun', totalOrder: 1200, grossProfit: 1400 },
-  { name: 'Jul', totalOrder: 1700, grossProfit: 1800 },
-  { name: 'Aug', totalOrder: 1600, grossProfit: 1550 },
-  { name: 'Sep', totalOrder: 200, grossProfit: 1500 },
-  { name: 'Oct', totalOrder: 1000, grossProfit: 1450 },
-  { name: 'Nov', totalOrder: 1400, grossProfit: 1700 },
-  { name: 'Dec', totalOrder: 1500, grossProfit: 1650 },
+  { name: 'Jan', totalSessions: 150, activeUsers: 800, activeListeners: 50 },
+  { name: 'Feb', totalSessions: 170, activeUsers: 1600, activeListeners: 55 },
+  { name: 'Mar', totalSessions: 140, activeUsers: 1500, activeListeners: 45 },
+  { name: 'Apr', totalSessions: 160, activeUsers: 1550, activeListeners: 60 },
+  { name: 'May', totalSessions: 140, activeUsers: 1700, activeListeners: 52 },
+  { name: 'Jun', totalSessions: 120, activeUsers: 1400, activeListeners: 48 },
+  // ... continue with remaining months
 ];
 
-
+// Interfaces
 interface MetricCardProps {
   title: string;
   value: string;
@@ -43,138 +50,163 @@ interface MetricCardProps {
   icon: React.ReactNode;
 }
 
+interface ActiveUserItemProps {
+  label: string;
+  value: string;
+  change: number;
+}
+
+interface SessionRowProps {
+  id: string;
+  date: string;
+  user: string;
+  listener: string;
+  duration: string;
+  status: string;
+}
+
+interface ListenerStatsProps {
+  name: string;
+  specialties: string;
+  rating: number;
+  sessionsCompleted: number;
+}
+
+interface NotificationProps {
+  text: string;
+  time: string;
+  type: 'user' | 'listener' | 'session';
+}
+
+// Component Definitions (same structure, updated content)
 const MetricCard: React.FC<MetricCardProps> = ({ title, value, change, icon }) => (
-  <Card>
+  <Card className="transition-all hover:shadow-lg">
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
       <CardTitle className="text-sm font-medium">{title}</CardTitle>
-      <div className="w-8 h-8 bg-[#FFF1E6] rounded-full flex items-center justify-center">
+      <div className="w-8 h-8 bg-[#F3F4F6] rounded-full flex items-center justify-center">
         {icon}
       </div>
     </CardHeader>
     <CardContent>
-      <div className="text-2xl font-bold">{value}</div>
-      <p className="text-xs text-muted-foreground">
-        <TrendingUp className="mr-1 h-4 w-4 text-green-500 inline" />
+      <div className="text-xl sm:text-2xl font-bold">{value}</div>
+      <p className="text-xs text-muted-foreground flex items-center mt-1">
+        <TrendingUp className="mr-1 h-4 w-4 text-green-500" />
         <span className="text-green-500">{change}% This week</span>
       </p>
     </CardContent>
   </Card>
 );
-  
-  interface ActiveUserItemProps {
-    label: string;
-    value: string;
-    change: number;
-  }
-  
-  const ActiveUserItem: React.FC<ActiveUserItemProps> = ({ label, value, change }) => (
-    <div className="flex justify-between items-center">
-      <span className="font-semibold">{label}</span>
-      <div className="text-right">
-        <p className="font-bold">{value}</p>
-        <p className={`text-sm ${change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-          {change >= 0 ? <ArrowUp className="inline h-3 w-3 mr-1" /> : <ArrowDown className="inline h-3 w-3 mr-1" />}
-          {Math.abs(change)}%
-        </p>
-      </div>
-    </div>
-  );
-  
-  interface OrderRowProps {
-    id: string;
-    date: string;
-    product: string;
-    quantity: number;
-    price: string;
-    status: string;
-  }
-  
-  const OrderRow: React.FC<OrderRowProps> = ({ id, date, product, quantity, price, status }) => (
-    <TableRow>
-      <TableCell>{id}</TableCell>
-      <TableCell>{date}</TableCell>
-      <TableCell>{product}</TableCell>
-      <TableCell>{quantity}</TableCell>
-      <TableCell>{price}</TableCell>
-      <TableCell>
-        <span className={`px-2 py-1 rounded text-xs font-bold text-white ${
-          status === 'Delivered' ? 'bg-green-800' :
-          status === 'Returned' ? 'bg-red-800' :
-          'bg-yellow-800'
-        }`}>
-          {status}
-        </span>
-      </TableCell>
-    </TableRow>
-  );
-  
-  interface PopularProductProps {
-    name: string;
-    brand: string;
-    change: number;
-  }
-  
-  const PopularProduct: React.FC<PopularProductProps> = ({ name, brand, change }) => (
-    <div className="flex justify-between items-center">
-      <div>
-        <p className="font-semibold">{name}</p>
-        <p className="text-sm text-muted-foreground">{brand}</p>
-      </div>
-      <p className="text-sm text-green-500">
-        <ArrowUp className="inline h-3 w-3 mr-1" />
-        {change}%
+
+const ActiveUserItem: React.FC<ActiveUserItemProps> = ({ label, value, change }) => (
+  <div className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+    <span className="font-semibold text-sm sm:text-base">{label}</span>
+    <div className="text-right">
+      <p className="font-bold text-sm sm:text-base">{value}</p>
+      <p className={`text-xs sm:text-sm ${change >= 0 ? 'text-green-500' : 'text-red-500'} flex items-center justify-end`}>
+        {change >= 0 ? <ArrowUp className="h-3 w-3 mr-1" /> : <ArrowDown className="h-3 w-3 mr-1" />}
+        {Math.abs(change)}%
       </p>
     </div>
-  );
-  
-  interface NotificationProps {
-    text: string;
-    time: string;
-  }
-  
-  const Notification: React.FC<NotificationProps> = ({ text, time }) => (
-    <div className="flex justify-between items-center text-sm">
-      <p>{text}</p>
-      <p className="text-muted-foreground">{time}</p>
+  </div>
+);
+
+const SessionRow: React.FC<SessionRowProps> = ({ id, date, user, listener, duration, status }) => (
+  <TableRow>
+    <TableCell className="font-medium">{id}</TableCell>
+    <TableCell>{date}</TableCell>
+    <TableCell>{user}</TableCell>
+    <TableCell>{listener}</TableCell>
+    <TableCell>{duration}</TableCell>
+    <TableCell>
+      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+        status === 'Completed' ? 'bg-green-100 text-green-800' :
+        status === 'Cancelled' ? 'bg-red-100 text-red-800' :
+        'bg-yellow-100 text-yellow-800'
+      }`}>
+        {status}
+      </span>
+    </TableCell>
+  </TableRow>
+);
+
+const ListenerStats: React.FC<ListenerStatsProps> = ({ name, specialties, rating, sessionsCompleted }) => (
+  <div className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+    <div>
+      <p className="font-semibold text-sm sm:text-base">{name}</p>
+      <p className="text-xs sm:text-sm text-muted-foreground">{specialties}</p>
+    </div>
+    <div className="text-right">
+      <p className="text-sm font-semibold">⭐ {rating.toFixed(1)}</p>
+      <p className="text-xs text-muted-foreground">{sessionsCompleted} sessions</p>
+    </div>
+  </div>
+);
+
+const Notification: React.FC<NotificationProps> = ({ text, time, type }) => {
+  const icons = {
+    user: <User className="h-4 w-4 text-blue-500" />,
+    listener: <Headphones className="h-4 w-4 text-green-500" />,
+    session: <Video className="h-4 w-4 text-purple-500" />
+  };
+
+  return (
+    <div className="flex items-center py-2 border-b border-gray-100 last:border-0">
+      <div className="mr-3">{icons[type]}</div>
+      <div className="flex-1">
+        <p className="text-sm">{text}</p>
+        <p className="text-xs text-muted-foreground">{time}</p>
+      </div>
     </div>
   );
-  
-  interface ChartLabelProps {
-    color: string;
-    label: string;
-  }
-  
-  const ChartLabel: React.FC<ChartLabelProps> = ({ color, label }) => (
-    <div className="flex items-center">
-      <div className={`w-3 h-3 rounded-full mr-2`} style={{ backgroundColor: color }}></div>
-      <span className="text-sm text-muted-foreground">{label}</span>
-    </div>
-  );
-  
-  const Dashboard: React.FC = () => {
-    const [selectedYear, setSelectedYear] = useState('2024');
-  
-    return (
-      <div className="p-6 bg-[#FFF8F3]">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
-          <MetricCard title="Total sales" value="500,000" change={5} icon={<DollarSign className="text-[#E68A4E]" />} />
-          <MetricCard title="Comics uploaded" value="5" change={5} icon={<BookOpen className="text-[#E68A4E]" />} />
-          <MetricCard title="Pending tasks" value="15" change={5} icon={<FileText className="text-[#E68A4E]" />} />
-          <MetricCard title="Total Revenue" value="₦ 2,843,632" change={5} icon={<DollarSign className="text-[#E68A4E]" />} />
-        </div>
-      
-      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+};
+
+const Dashboard: React.FC = () => {
+  const [selectedPeriod, setSelectedPeriod] = useState('2024');
+
+  return (
+    <div className="p-2 sm:p-6 bg-gray-50 min-h-screen">
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <MetricCard 
+          title="Total Users" 
+          value="25,431" 
+          change={12} 
+          icon={<Users className="text-blue-500" />} 
+        />
+        <MetricCard 
+          title="Active Listeners" 
+          value="142" 
+          change={8} 
+          icon={<UserCheck className="text-green-500" />} 
+        />
+        <MetricCard 
+          title="Total Sessions" 
+          value="1,893" 
+          change={15} 
+          icon={<Calendar className="text-purple-500" />} 
+        />
+        <MetricCard 
+          title="Completion Rate" 
+          value="89%" 
+          change={5} 
+          icon={<BarChart2 className="text-orange-500" />} 
+        />
+      </div>
+
+      {/* Charts Section */}
+      <div className="mt-4 sm:mt-8 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        {/* Main Chart Card */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
               <div>
-                <CardTitle>Report & Analytics</CardTitle>
-                <CardDescription>Lorem ipsum dolor sit amet consectetur.</CardDescription>
+                <CardTitle className="text-lg sm:text-xl">Platform Analytics</CardTitle>
+                <CardDescription className="text-sm">Overview of users, listeners, and sessions</CardDescription>
               </div>
-              <div className="flex items-center space-x-2">
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select year" />
+              <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
+                <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectValue placeholder="Select period" />
                   </SelectTrigger>
                   <SelectContent>
                     {['2021', '2022', '2023', '2024'].map(year => (
@@ -187,118 +219,143 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, change, icon }) =
             </div>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="orders">
-              <TabsList>
-                <TabsTrigger value="orders">Orders</TabsTrigger>
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="w-full sm:w-auto flex justify-start overflow-x-auto">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="users">Users</TabsTrigger>
-                <TabsTrigger value="tasks">Pending Tasks</TabsTrigger>
+                <TabsTrigger value="listeners">Listeners</TabsTrigger>
+                <TabsTrigger value="sessions">Sessions</TabsTrigger>
               </TabsList>
-              <TabsContent value="orders">
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="totalOrder" fill="#E68A4E" />
-                    <Bar dataKey="grossProfit" fill="#FCD5B5" />
-                  </BarChart>
-                </ResponsiveContainer>
-                <div className="mt-4 flex justify-center space-x-8">
-                  <ChartLabel color="#E68A4E" label="Total Order" />
-                  <ChartLabel color="#FCD5B5" label="Gross Profit" />
+              <TabsContent value="overview" className="mt-4">
+                <div className="h-[300px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="totalSessions" fill="#9333EA" />
+                      <Bar dataKey="activeUsers" fill="#3B82F6" />
+                      <Bar dataKey="activeListeners" fill="#22C55E" />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
               </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
-        
+
+        {/* Active Users Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Active users</CardTitle>
+            <CardTitle className="text-lg">User Statistics</CardTitle>
           </CardHeader>
-          <CardContent>
-            <h4 className="text-md font-semibold mb-4">Number of active users</h4>
+          <CardContent className="space-y-6">
             <div className="space-y-4">
-              <ActiveUserItem label="Vendors" value="500,000" change={20} />
-              <ActiveUserItem label="Artisans" value="300,000" change={0.5} />
-              <ActiveUserItem label="Brands" value="50" change={6} />
-              <ActiveUserItem label="Fans" value="2,000,000" change={-9} />
-            </div>
-          </CardContent>
-          <CardHeader>
-            <CardTitle>Website visit</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-between">
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => {
-                const heights = [50, 80, 90, 100, 120, 70, 60];
-                const heightPercentage = heights[index];
-                const percentage = ((heightPercentage / 120) * 100).toFixed(0);
-
-                return (
-                  <div key={day} className="text-center">
-                    <div 
-                      className={`w-6 ${index === 4 ? 'bg-[#E68A4E]' : 'bg-[#FCD5B5]'}`} 
-                      style={{ height: `${heightPercentage}px` }}
-                    />
-                    <p className="text-xs mt-1">{day}</p>
-                    <p className="text-xs">{percentage}%</p>
-                  </div>
-                );
-              })}
+              <ActiveUserItem label="New Users" value="1,245" change={20} />
+              <ActiveUserItem label="Active Users" value="18,556" change={12} />
+              <ActiveUserItem label="Returning Users" value="8,126" change={5} />
+              <ActiveUserItem label="Premium Users" value="2,854" change={15} />
             </div>
           </CardContent>
         </Card>
       </div>
-      
-      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+
+      {/* Recent Sessions and Top Listeners Section */}
+      <div className="mt-4 sm:mt-8 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        {/* Recent Sessions Table */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Recent Order</CardTitle>
+            <CardTitle className="text-lg">Recent Sessions</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="overflow-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>ID</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Quantity</TableHead>
-                  <TableHead>Price</TableHead>
+                  <TableHead>User</TableHead>
+                  <TableHead>Listener</TableHead>
+                  <TableHead>Duration</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <OrderRow id="29..." date="Jan 24, 2020" product="Blend fabric sweater" quantity={17} price="$3,549" status="On transit" />
-                <OrderRow id="2977" date="Jan 24, 2020" product="Full zip sweater" quantity={7} price="$3,549" status="On transit" />
-                <OrderRow id="2971" date="Jan 19, 2020" product="Donegal sweater" quantity={45} price="$3,549" status="Delivered" />
-                <OrderRow id="2975" date="Jan 24, 2020" product="Tennis sweater" quantity={9} price="$3,549" status="Returned" />
-                <OrderRow id="29..." date="Jan 20, 2020" product="Cowl neck sweater" quantity={24} price="$3,549" status="On transit" />
+                <SessionRow 
+                  id="S-1234"
+                  date="Mar 15, 2024"
+                  user="John Doe"
+                  listener="Sarah Smith"
+                  duration="45 mins"
+                  status="Completed"
+                />
+                <SessionRow 
+                  id="S-1235"
+                  date="Mar 15, 2024"
+                  user="Alice Johnson"
+                  listener="Mike Brown"
+                  duration="30 mins"
+                  status="In Progress"
+                />
+                <SessionRow 
+                  id="S-1236"
+                  date="Mar 14, 2024"
+                  user="Emma Wilson"
+                  listener="David Lee"
+                  duration="60 mins"
+                  status="Completed"
+                />
               </TableBody>
             </Table>
           </CardContent>
         </Card>
-        
+
+        {/* Top Listeners and Notifications */}
         <Card>
           <CardHeader>
-            <CardTitle>Most popular products</CardTitle>
+            <CardTitle className="text-lg">Top Listeners</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
             <div className="space-y-4">
-              <PopularProduct name="Hoodies" brand="Chubbies x Blackbones" change={7} />
-              <PopularProduct name="Snapbacks" brand="Chubbies x Blackbones" change={7} />
-              <PopularProduct name="Stickers" brand="Chubbies x Blackbones" change={7} />
+              <ListenerStats 
+                name="Sarah Smith"
+                specialties="Anxiety, Depression"
+                rating={4.9}
+                sessionsCompleted={156}
+              />
+              <ListenerStats 
+                name="Mike Brown"
+                specialties="Stress Management"
+                rating={4.8}
+                sessionsCompleted={142}
+              />
+              <ListenerStats 
+                name="David Lee"
+                specialties="Relationship Counseling"
+                rating={4.7}
+                sessionsCompleted={128}
+              />
             </div>
-          </CardContent>
-          <CardHeader>
-            <CardTitle>Notifications</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Notification text="New order received" time="3 hours ago" />
-              <Notification text="Customer canceled order #1234" time="5 hours ago" />
-              <Notification text="New user registered" time="1 day ago" />
+
+            <div>
+              <h4 className="text-md font-semibold mb-4">Recent Activities</h4>
+              <div className="space-y-2">
+                <Notification 
+                  text="New user registration: Emma Wilson"
+                  time="2 hours ago"
+                  type="user"
+                />
+                <Notification 
+                  text="Session completed with Sarah Smith"
+                  time="3 hours ago"
+                  type="session"
+                />
+                <Notification 
+                  text="New listener approved: James Chen"
+                  time="5 hours ago"
+                  type="listener"
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
