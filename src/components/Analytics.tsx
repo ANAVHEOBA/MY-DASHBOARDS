@@ -1,21 +1,10 @@
 import React, { useEffect, useState } from 'react';
-
-// Define the structure of the analytics data
-interface AnalyticsData {
-  userRegistrations: number;
-  userRetention: number;
-  userEngagement: number;
-  listenerPerformance: number;
-  utilizationRate: number;
-  listenerRatings: number;
-  totalSessions: number;
-  averageSessionDuration: number;
-  cancellationRate: number;
-  peakUsage: string;
-  systemUptime: number;
-  averageResponseTime: number;
-  errorRate: number;
-}
+import { analyticsApi } from '../services/api';
+import { AnalyticsData } from '../services/types';
+import { AnalyticsCard } from './analytics/AnalyticsCard';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Loading } from './ui/loading';
 
 const Analytics: React.FC = () => {
   const [startDate, setStartDate] = useState<string>('');

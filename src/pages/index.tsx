@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Dashboard from '../components/Dashboard';
 import Fans from '../components/Fans';
-import Users from '../components/Users'
+import Users from '../components/users'
 import Listeners from '../components/Listeners';
 import Sessions from '../components/Sessions';
 import Analytics from '../components/Analytics';
