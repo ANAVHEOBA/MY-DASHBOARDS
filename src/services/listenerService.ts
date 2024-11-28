@@ -33,16 +33,27 @@ export const listenerService = {
     try {
       const response = await fetch(`${API_URL}/listeners`);
       const data = await response.json();
-
+  
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
-      // If single listener is returned, wrap it in an array
-      return Array.isArray(data) ? data : [data.listener];
+  
+      // Log the response data for debugging
+      console.log('GET Listeners Response:', data);
+  
+      // Handle the specific response format from your API
+      if (data.listeners) {
+        return data.listeners;
+      } else if (data.listener) {
+        return [data.listener];
+      } else if (Array.isArray(data)) {
+        return data;
+      }
+      
+      throw new Error('Invalid response format');
     } catch (error) {
       console.error('Service error:', error);
       throw error;
     }
   }
-};
+}; 
