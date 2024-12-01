@@ -4,13 +4,27 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  webpack: (config, { isServer }) => {
-    // Add any webpack configurations if needed
-    return config;
+  async headers() {
+    return [
+      {
+        // Allow CORS for API routes
+        source: '/api/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PUT,DELETE' },
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type' },
+        ],
+      },
+    ];
   },
-  // Add this to force the build to continue even with errors
-  typescript: {
-    ignoreBuildErrors: true,
+  // Optional: Add rewrites if you want to proxy requests
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${process.env.NEXT_PUBLIC_API_URL}/:path*`,
+      },
+    ];
   },
 };
 

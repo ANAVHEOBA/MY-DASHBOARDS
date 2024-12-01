@@ -1,11 +1,10 @@
 import { Listener, ApiResponse } from '../types/listener';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { API_URL } from '../config/api';
 
 export const listenerService = {
   createListener: async (listenerData: Partial<Listener>): Promise<ApiResponse> => {
     try {
-      console.log('Making request to:', `${API_URL}/listeners`); // Debug log
+      console.log('Making request to:', `${API_URL}/listeners`);
       
       const response = await fetch(`${API_URL}/listeners`, {
         method: 'POST',
@@ -16,7 +15,7 @@ export const listenerService = {
       });
 
       const data = await response.json();
-      console.log('Response data:', data); // Debug log
+      console.log('Response data:', data);
 
       if (!response.ok) {
         throw new Error(data.error || `HTTP error! status: ${response.status}`);
@@ -38,10 +37,8 @@ export const listenerService = {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
   
-      // Log the response data for debugging
       console.log('GET Listeners Response:', data);
   
-      // Handle the specific response format from your API
       if (data.listeners) {
         return data.listeners;
       } else if (data.listener) {
@@ -56,4 +53,4 @@ export const listenerService = {
       throw error;
     }
   }
-}; 
+};
