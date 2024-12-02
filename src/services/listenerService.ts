@@ -1,5 +1,14 @@
 import { Listener, ApiResponse } from '../types/listener';
 import { API_URL } from '../config/api';
+import { fetchWithRetry } from '../lib/utils';
+
+const defaultHeaders = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
 
 export const listenerService = {
   createListener: async (listenerData: Partial<Listener>): Promise<ApiResponse> => {
@@ -8,10 +17,10 @@ export const listenerService = {
       
       const response = await fetch(`${API_URL}/listeners`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(listenerData)
+        headers: defaultHeaders,
+        body: JSON.stringify(listenerData),
+        mode: 'cors', // Add this
+        credentials: 'same-origin', // or 'include' if you need cookies
       });
 
       const data = await response.json();
@@ -30,7 +39,13 @@ export const listenerService = {
 
   getListeners: async (): Promise<Listener[]> => {
     try {
-      const response = await fetch(`${API_URL}/listeners`);
+      const response = await fetch(`${API_URL}/listeners`, {
+        method: 'GET',
+        headers: defaultHeaders,
+        mode: 'cors', // Add this
+        credentials: 'same-origin', // or 'include' if you need cookies
+      });
+      
       const data = await response.json();
   
       if (!response.ok) {
