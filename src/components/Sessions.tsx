@@ -27,7 +27,7 @@ interface Session {
   };
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = 'https://ready-back-end.onrender.com';
 
 // Helper component for status badges
 const StatusBadge: React.FC<{ status: Session['status'] }> = ({ status }) => {
