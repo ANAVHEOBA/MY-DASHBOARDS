@@ -3,7 +3,7 @@ import { Search, Plus, Eye, Edit2, XCircle, X, RefreshCw } from 'lucide-react';
 import { Listener, FormErrors, TimeSlot, DayAvailability } from '../types/listener';
 import { DAYS_OF_WEEK, DEFAULT_TIME_SLOTS, GENDERS } from '../constants/listener';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = 'https://ready-back-end.onrender.com';
 
 const Listeners: React.FC = () => {
   // State Management
