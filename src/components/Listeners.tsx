@@ -3,6 +3,8 @@ import { Search, Plus, Eye, Edit2, XCircle, X, RefreshCw } from 'lucide-react';
 import { Listener, FormErrors, TimeSlot, DayAvailability } from '../types/listener';
 import { DAYS_OF_WEEK, DEFAULT_TIME_SLOTS, GENDERS } from '../constants/listener';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 const Listeners: React.FC = () => {
   // State Management
   const [listeners, setListeners] = useState<Listener[]>([]);
@@ -40,7 +42,7 @@ const Listeners: React.FC = () => {
     const fetchListeners = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('http://localhost:5000/listeners');
+        const response = await fetch(`${API_URL}/listeners`);
         const data = await response.json();
         
         if (!response.ok) {
@@ -71,7 +73,7 @@ const Listeners: React.FC = () => {
   const refreshListeners = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:5000/listeners');
+      const response = await fetch(`${API_URL}/listeners`);
       const data = await response.json();
       
       if (!response.ok) {
@@ -165,19 +167,20 @@ const Listeners: React.FC = () => {
           }))
         };
   
-        const response = await fetch('http://localhost:5000/listeners', {
+        const response = await fetch(`${API_URL}/listeners`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(listenerData)
         });
-  
+    
         const data = await response.json();
-  
+    
         if (!response.ok) {
           throw new Error(data.message || 'Failed to create listener');
         }
+    
   
         await refreshListeners();
         setShowModal(false);

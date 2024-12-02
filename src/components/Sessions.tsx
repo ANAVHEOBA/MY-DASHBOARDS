@@ -27,6 +27,8 @@ interface Session {
   };
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 // Helper component for status badges
 const StatusBadge: React.FC<{ status: Session['status'] }> = ({ status }) => {
   const statusClasses = {
@@ -74,7 +76,7 @@ const Sessions: React.FC = () => {
           setIsLoading(true);
           const skip = (currentPage - 1) * sessionsPerPage;
           const response = await fetch(
-            `http://localhost:5000/sessions/platform/all?limit=${sessionsPerPage}&skip=${skip}`
+            `${API_URL}/sessions/platform/all?limit=${sessionsPerPage}&skip=${skip}`
           );
           
           if (!response.ok) {
@@ -135,7 +137,7 @@ const Sessions: React.FC = () => {
       }
   
       try {
-        const response = await fetch('http://localhost:5000/sessions', {
+        const response = await fetch(`${API_URL}/sessions`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -145,7 +147,7 @@ const Sessions: React.FC = () => {
             status: 'upcoming',
           }),
         });
-  
+    
         if (!response.ok) {
           throw new Error('Failed to create session');
         }
@@ -162,43 +164,43 @@ const Sessions: React.FC = () => {
         });
   
         // Refresh the sessions list
-        const skip = (currentPage - 1) * sessionsPerPage;
-        const refreshResponse = await fetch(
-          `http://localhost:5000/sessions/platform/all?limit=${sessionsPerPage}&skip=${skip}`
-        );
-        const refreshData = await refreshResponse.json();
-        setSessions(refreshData.sessions);
-        setTotalSessions(refreshData.total);
+    const skip = (currentPage - 1) * sessionsPerPage;
+    const refreshResponse = await fetch(
+      `${API_URL}/sessions/platform/all?limit=${sessionsPerPage}&skip=${skip}`
+    );
+    const refreshData = await refreshResponse.json();
+    setSessions(refreshData.sessions);
+    setTotalSessions(refreshData.total);
+
+  } catch (error) {
+    console.error('Error creating session:', error);
+    alert('Failed to create session. Please try again.');
+  }
+};
   
-      } catch (error) {
-        console.error('Error creating session:', error);
-        alert('Failed to create session. Please try again.');
-      }
-    };
-  
-    // Update meeting link handler
-    const handleUpdateMeetingLink = async (sessionId: string, link: string) => {
-      try {
-        const response = await fetch(`http://localhost:5000/sessions/${sessionId}/add-link`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ googleMeetLink: link }),
-        });
-  
-        if (!response.ok) {
-          throw new Error('Failed to update meeting link');
-        }
-  
-        // Update the sessions list with the new link
-        setSessions(prevSessions =>
-          prevSessions.map(session =>
-            session._id === sessionId
-              ? { ...session, googleMeetLink: link }
-              : session
-          )
-        );
+    // Update the meeting link handler
+const handleUpdateMeetingLink = async (sessionId: string, link: string) => {
+  try {
+    const response = await fetch(`${API_URL}/sessions/${sessionId}/add-link`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ googleMeetLink: link }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update meeting link');
+    }
+
+    // Update the sessions list with the new link
+    setSessions(prevSessions =>
+      prevSessions.map(session =>
+        session._id === sessionId
+          ? { ...session, googleMeetLink: link }
+          : session
+      )
+    );
   
         setShowLinkModal(false);
         setSelectedSessionId(null);
