@@ -1,3 +1,4 @@
+// Existing interfaces
 export interface TimeSlot {
   startTime: string;
   endTime: string;
@@ -17,16 +18,29 @@ export interface Listener {
   description: string;
   gender: 'male' | 'female' | 'other';
   availability: DayAvailability[];
+  email: string;
+  phoneNumber: string;
 }
 
-// Add this FormErrors interface
 export interface FormErrors {
   name?: string;
   description?: string;
   gender?: string;
   availability?: string;
+  email?: string;  
+  phoneNumber?: string;
 }
 
 export interface ApiResponse {
   listener: Listener;
+}
+
+// Add the Message interface
+export interface Message {
+  _id: string;
+  subject: string;
+  content: string;
+  priority: 'normal' | 'urgent';
+  createdAt: string;
+  status: 'sent' | 'failed' | 'pending';
 }
