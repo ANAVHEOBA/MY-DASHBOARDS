@@ -31,18 +31,55 @@ interface Session {
   topic: string;
   time: string;
   meetingLink?: string;
-  status: 'scheduled' | 'completed' | 'cancelled';
+  status: 'successful' | 'unsuccessful' | 'cancelled';  
   createdAt: string;
   updatedAt: string;
 }
 
+type SessionProgress = 'scheduled' | 'ongoing' | 'completed';
+
 const API_URL = 'https://ready-back-end.onrender.com';
+
+
+const getSessionProgress = (sessionTime: string): SessionProgress => {
+  const sessionDate = new Date(sessionTime);
+  const now = new Date();
+  
+  // Session duration in milliseconds (1 hour)
+  const sessionDuration = 60 * 60 * 1000;
+  
+  // Calculate session end time
+  const sessionEndTime = new Date(sessionDate.getTime() + sessionDuration);
+  
+  if (now < sessionDate) {
+    return 'scheduled';
+  } else if (now >= sessionDate && now <= sessionEndTime) {
+    return 'ongoing';
+  } else {
+    return 'completed';
+  }
+};
+
+
+const ProgressBadge: React.FC<{ progress: SessionProgress }> = ({ progress }) => {
+  const progressClasses = {
+    'scheduled': 'bg-blue-100 text-blue-800',
+    'ongoing': 'bg-yellow-100 text-yellow-800',
+    'completed': 'bg-green-100 text-green-800'
+  };
+
+  return (
+    <span className={`px-2 py-1 rounded-full text-xs ${progressClasses[progress]}`}>
+      {progress}
+    </span>
+  );
+};
 
 // Helper component for status badges
 const StatusBadge: React.FC<{ status: Session['status'] }> = ({ status }) => {
   const statusClasses = {
-    'scheduled': 'bg-blue-100 text-blue-800',
-    'completed': 'bg-gray-100 text-gray-800',
+    'successful': 'bg-green-100 text-green-800',
+    'unsuccessful': 'bg-yellow-100 text-yellow-800',
     'cancelled': 'bg-red-100 text-red-800'
   };
 
@@ -139,6 +176,41 @@ const Sessions: React.FC = () => {
     const paginate = (pageNumber: number) => {
       setCurrentPage(pageNumber);
     };
+
+
+    // FOR ADMINS TO UPDATE
+const handleUpdateStatus = async (sessionId: string, newStatus: 'successful' | 'unsuccessful' | 'cancelled') => {
+  try {
+    const response = await fetch(`${API_URL}/sessions/${sessionId}/update-status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status: newStatus }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update session status');
+    }
+
+    const data = await response.json();
+
+    // Update the sessions state with the new status
+    setSessions(prevSessions =>
+      prevSessions.map(session =>
+        session._id === sessionId
+          ? { ...session, status: newStatus }
+          : session
+      )
+    );
+
+    // Show success message
+    alert(data.message || 'Status updated successfully');
+  } catch (error) {
+    console.error('Error updating session status:', error);
+    alert('Failed to update session status. Please try again.');
+  }
+};
   
     // Update meeting link handler
     const handleUpdateMeetingLink = async (sessionId: string, link: string) => {
@@ -186,10 +258,13 @@ const Sessions: React.FC = () => {
             <h3 className="font-medium text-gray-900">{session.user.name}</h3>
             <p className="text-sm text-gray-500">
               {new Date(session.time).toLocaleDateString()}
-            </p>
-          </div>
-          <StatusBadge status={session.status} />
-        </div>
+              </p>
+      </div>
+      <div className="flex flex-col gap-2">
+        <ProgressBadge progress={getSessionProgress(session.time)} />
+        <StatusBadge status={session.status} />
+      </div>
+    </div>
         
         <div className="space-y-2 text-sm text-gray-600">
           <div className="flex items-center">
@@ -230,6 +305,17 @@ const Sessions: React.FC = () => {
               <Video className="h-5 w-5" />
             </button>
           </div>
+          <select
+        value={session.status}
+        onChange={(e) => handleUpdateStatus(session._id, e.target.value as Session['status'])}
+        className="block w-32 rounded-md border-gray-300 bg-gray-100 
+          text-gray-900 font-medium shadow-sm focus:border-blue-500 
+          focus:ring-blue-500 text-sm py-1.5"
+      >
+        <option value="successful" className="bg-gray-100 text-gray-900">Successful</option>
+        <option value="unsuccessful" className="bg-gray-100 text-gray-900">Unsuccessful</option>
+        <option value="cancelled" className="bg-gray-100 text-gray-900">Cancelled</option>
+      </select>
         </div>
       </div>
     );
@@ -245,6 +331,7 @@ const Sessions: React.FC = () => {
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Listener</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Topic</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
           </tr>
@@ -252,39 +339,55 @@ const Sessions: React.FC = () => {
         <tbody className="bg-white divide-y divide-gray-200">
           {filteredSessions.map((session: Session) => (
             <tr key={session._id}>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{session.user.name}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{session.listener.name}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {new Date(session.time).toLocaleString()}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{session.topic}</td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <StatusBadge status={session.status} />
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                <div className="flex space-x-2">
-                  {session.meetingLink && (
-                    <a
-                      href={session.meetingLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-900"
-                    >
-                      <Video className="h-5 w-5" />
-                    </a>
-                  )}
-                  <button
-                    onClick={() => {
-                      setSelectedSessionId(session._id);
-                      setMeetingLink(session.meetingLink || '');
-                      setShowLinkModal(true);
-                    }}
-                    className="text-yellow-600 hover:text-yellow-900"
-                  >
-                    <Edit2 className="h-5 w-5" />
-                  </button>
-                </div>
-              </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{session.user.name}</td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{session.listener.name}</td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              {new Date(session.time).toLocaleString()}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{session.topic}</td>
+            <td className="px-6 py-4 whitespace-nowrap">
+              <ProgressBadge progress={getSessionProgress(session.time)} />
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap">
+              <StatusBadge status={session.status} />
+            </td>
+              
+<td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+  <div className="flex space-x-2 items-center">
+    {session.meetingLink && (
+      <a
+        href={session.meetingLink}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-600 hover:text-blue-900"
+      >
+        <Video className="h-5 w-5" />
+      </a>
+    )}
+    <button
+      onClick={() => {
+        setSelectedSessionId(session._id);
+        setMeetingLink(session.meetingLink || '');
+        setShowLinkModal(true);
+      }}
+      className="text-yellow-600 hover:text-yellow-900"
+    >
+      <Edit2 className="h-5 w-5" />
+    </button>
+    {/* Updated select styling */}
+    <select
+      value={session.status}
+      onChange={(e) => handleUpdateStatus(session._id, e.target.value as Session['status'])}
+      className="ml-2 block w-32 rounded-md border-gray-300 bg-gray-100 
+        text-gray-900 font-medium shadow-sm focus:border-blue-500 
+        focus:ring-blue-500 text-sm py-1.5"
+    >
+      <option value="successful" className="bg-gray-100 text-gray-900">Successful</option>
+      <option value="unsuccessful" className="bg-gray-100 text-gray-900">Unsuccessful</option>
+      <option value="cancelled" className="bg-gray-100 text-gray-900">Cancelled</option>
+    </select>
+  </div>
+</td>
             </tr>
           ))}
         </tbody>
