@@ -108,7 +108,7 @@ const Listeners: React.FC = () => {
 
   const fetchListenerSessions = async (listenerId: string) => {
     try {
-      const response = await fetch(`${API_URL}/listener/${listenerId}/sessions`);
+      const response = await fetch(`${API_URL}/sessions/listener/${listenerId}/sessions`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -397,7 +397,7 @@ const Listeners: React.FC = () => {
   // Function to export listeners
   const exportListeners = async () => {
     try {
-      const response = await fetch(`${API_URL}/listener/export`, {
+      const response = await fetch(`${API_URL}/listeners/export`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
