@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Eye, Edit2, XCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Search, Plus, Eye } from 'lucide-react';
 
 const API_URL = 'https://ready-back-end.onrender.com';
 
@@ -20,6 +19,17 @@ interface User {
   updatedAt: string;
 }
 
+interface Session {
+  _id: string;
+  listenerId: string;
+  userId: string;
+  time: string;
+  topic: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface PaginatedResponse {
   users: User[];
   total: number;
@@ -35,6 +45,7 @@ interface UserDetailsModalProps {
 
 const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ userId, onClose }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,7 +69,24 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ userId, onClose }) 
       }
     };
 
+    const fetchUserSessions = async () => {
+      try {
+        const response = await fetch(`${API_URL}/user/${userId}/sessions`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch user sessions');
+        }
+
+        const data = await response.json();
+        setSessions(data.sessions);
+      } catch (err) {
+        console.error('Error fetching user sessions:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch user sessions');
+      }
+    };
+
     fetchUserDetails();
+    fetchUserSessions();
   }, [userId]);
 
   if (isLoading) {
@@ -97,7 +125,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ userId, onClose }) 
               onClick={onClose}
               className="text-gray-400 hover:text-gray-500"
             >
-              <XCircle className="h-6 w-6" />
+              <span className="h-6 w-6">✖</span>
             </button>
           </div>
 
@@ -107,7 +135,6 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ userId, onClose }) 
               alt={`${user.firstName} ${user.lastName}`}
               className="w-32 h-32 rounded-full mx-auto"
             />
-
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-500">Name</label>
@@ -154,13 +181,28 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ userId, onClose }) 
                 </span>
               </div>
             </div>
+            <div className="mt-4">
+              <h3 className="text-lg font-semibold">User Sessions</h3>
+              {sessions.length > 0 ? (
+                <ul className="mt-2 space-y-2">
+                  {sessions.map(session => (
+                    <li key={session._id} className="border p-2 rounded">
+                      <p><strong>Topic:</strong> {session.topic}</p>
+                      <p><strong>Status:</strong> {session.status}</p>
+                      <p><strong>Time:</strong> {new Date(session.time).toLocaleString()}</p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No sessions found for this user.</p>
+              )}
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 };
-
 
 const Users: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -172,34 +214,36 @@ const Users: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [totalUsers, setTotalUsers] = useState(0);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState('firstName'); // Default sorting field
+  const [sortOrder, setSortOrder] = useState('asc'); // Default sorting order
+
+  const fetchUsers = async () => {
+    try {
+      setIsLoading(true);
+      const skip = (currentPage - 1) * usersPerPage;
+      const response = await fetch(
+        `${API_URL}/users?skip=${skip}&limit=${usersPerPage}&sortBy=${sortBy}&sortOrder=${sortOrder}`
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+
+      const data: PaginatedResponse = await response.json();
+      setUsers(data.users);
+      setTotalUsers(data.total);
+      setFilteredUsers(data.users);
+    } catch (err) {
+      console.error('Error fetching users:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch users');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setIsLoading(true);
-        const skip = (currentPage - 1) * usersPerPage;
-        const response = await fetch(
-          `${API_URL}/users?skip=${skip}&limit=${usersPerPage}`
-        );
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch users');
-        }
-
-        const data: PaginatedResponse = await response.json();
-        setUsers(data.users);
-        setTotalUsers(data.total);
-        setFilteredUsers(data.users);
-      } catch (err) {
-        console.error('Error fetching users:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch users');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchUsers();
-  }, [currentPage, usersPerPage]);
+  }, [currentPage, usersPerPage, sortBy, sortOrder]); // Add sortBy and sortOrder to dependencies
 
   useEffect(() => {
     setFilteredUsers(
@@ -216,6 +260,35 @@ const Users: React.FC = () => {
 
   const handleCloseModal = () => {
     setSelectedUserId(null);
+  };
+
+  const exportUsers = async () => {
+    try {
+      const response = await fetch(`${API_URL}/users/export`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to export users');
+      }
+
+      // Create a blob from the response
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'users_export.csv'; // Set the filename for the download
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url); // Clean up the URL object
+    } catch (error) {
+      console.error('Error exporting users:', error);
+      alert('Failed to export users. Please try again.');
+    }
   };
 
   const renderUserCard = (user: User) => (
@@ -250,12 +323,6 @@ const Users: React.FC = () => {
         >
           <Eye className="h-5 w-5" />
         </button>
-        <button className="p-1 text-yellow-500 hover:text-yellow-700">
-          <Edit2 className="h-5 w-5" />
-        </button>
-        <button className="p-1 text-red-500 hover:text-red-700">
-          <XCircle className="h-5 w-5" />
-        </button>
       </div>
     </div>
   );
@@ -264,10 +331,43 @@ const Users: React.FC = () => {
     <div className="p-2 sm:p-4 md:p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Users</h2>
-        <button className="flex items-center px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-          <Plus className="h-4 w-4 sm:mr-2" />
-          <span className="hidden sm:inline">Add New User</span>
-        </button>
+        <div className="flex space-x-2">
+          <button 
+            className="flex items-center justify-center bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+            onClick={exportUsers}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            <span>Export Users</span>
+          </button>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="border rounded-lg p-2 bg-white text-gray-800"
+          >
+            <option value="firstName">First Name</option>
+            <option value="lastName">Last Name</option>
+            <option value="email">Email</option>
+            <option value="createdAt">Registration Date</option>
+            <option value="verified">Status</option>
+          </select>
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+            className="border rounded-lg p-2 bg-white text-gray-800"
+          >
+            <option value="asc">Ascending</option>
+            <option value="desc">Descending</option>
+          </select>
+          <button
+            onClick={() => {
+              setCurrentPage(1); // Reset to first page when sorting changes
+              fetchUsers(); // Fetch users with new sorting
+            }}
+            className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            Sort
+          </button>
+        </div>
       </div>
 
       <div className="mb-6">
@@ -337,12 +437,6 @@ const Users: React.FC = () => {
                         >
                           <Eye className="h-4 w-4" />
                         </button>
-                        <button className="text-yellow-500 hover:text-yellow-700">
-                          <Edit2 className="h-4 w-4" />
-                        </button>
-                        <button className="text-red-500 hover:text-red-700">
-                          <XCircle className="h-4 w-4" />
-                        </button>
                       </div>
                     </td>
                   </tr>
@@ -352,23 +446,23 @@ const Users: React.FC = () => {
           </div>
 
           <div className="mt-6 flex flex-wrap justify-center gap-2">
-  {Array.from(
-    { length: Math.ceil(totalUsers / usersPerPage) },
-    (_, index: number) => (
-      <button
-        key={index}
-        onClick={() => setCurrentPage(index + 1)}
-        className={`px-3 py-1 rounded-md text-sm ${
-          currentPage === index + 1 
-            ? 'bg-blue-500 text-white' 
-            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-        }`}
-      >
-        {index + 1}
-      </button>
-    )
-  )}
-</div>
+            {Array.from(
+              { length: Math.ceil(totalUsers / usersPerPage) },
+              (_, index: number) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentPage(index + 1)}
+                  className={`px-3 py-1 rounded-md text-sm ${
+                    currentPage === index + 1 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  {index + 1}
+                </button>
+              )
+            )}
+          </div>
         </>
       )}
 

@@ -6,7 +6,6 @@ import {
   X, 
   Eye, 
   Edit2, 
-  XCircle, 
   Video,
   Clock,
   Headphones 
@@ -34,12 +33,12 @@ interface Session {
   status: 'successful' | 'unsuccessful' | 'cancelled';  
   createdAt: string;
   updatedAt: string;
+  comment?: string; // Add comment property
 }
 
 type SessionProgress = 'scheduled' | 'ongoing' | 'completed';
 
 const API_URL = 'https://ready-back-end.onrender.com';
-
 
 const getSessionProgress = (sessionTime: string): SessionProgress => {
   const sessionDate = new Date(sessionTime);
@@ -59,7 +58,6 @@ const getSessionProgress = (sessionTime: string): SessionProgress => {
     return 'completed';
   }
 };
-
 
 const ProgressBadge: React.FC<{ progress: SessionProgress }> = ({ progress }) => {
   const progressClasses = {
@@ -101,50 +99,54 @@ const Sessions: React.FC = () => {
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [meetingLink, setMeetingLink] = useState('');
+  const [comment, setComment] = useState(''); // State for comment
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState('time'); // Default sorting field
+  const [sortOrder, setSortOrder] = useState('asc'); // Default sorting order
 
-  // Fetch Sessions
-  useEffect(() => {
-    const fetchSessions = async () => {
-      try {
-        setIsLoading(true);
-        const skip = (currentPage - 1) * sessionsPerPage;
-        const response = await fetch(
-          `${API_URL}/sessions/platform/all?limit=${sessionsPerPage}&skip=${skip}`
-        );
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch sessions');
-        }
-
-        const data = await response.json();
-        console.log('Raw session data:', data);
-
-        if (data && Array.isArray(data.sessions)) {
-          const validSessions = data.sessions.filter((session: Session) => 
-            session && 
-            session._id && 
-            session.status
-          );
-          console.log('Validated sessions:', validSessions);
-          
-          setSessions(validSessions);
-          setTotalSessions(data.total || validSessions.length);
-          setFilteredSessions(validSessions);
-        } else {
-          throw new Error('Invalid response format');
-        }
-      } catch (err) {
-        console.error('Error fetching sessions:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch sessions');
-      } finally {
-        setIsLoading(false);
+  // Fetch Sessions function
+  const fetchSessions = async () => {
+    try {
+      setIsLoading(true);
+      const skip = (currentPage - 1) * sessionsPerPage;
+      const response = await fetch(
+        `${API_URL}/sessions/platform/all?limit=${sessionsPerPage}&skip=${skip}&sortBy=${sortBy}&sortOrder=${sortOrder}`
+      );
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch sessions');
       }
-    };
 
+      const data = await response.json();
+      console.log('Raw session data:', data);
+
+      if (data && Array.isArray(data.sessions)) {
+        const validSessions = data.sessions.filter((session: Session) => 
+          session && 
+          session._id && 
+          session.status
+        );
+        console.log('Validated sessions:', validSessions);
+        
+        setSessions(validSessions);
+        setTotalSessions(data.total || validSessions.length);
+        setFilteredSessions(validSessions);
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (err) {
+      console.error('Error fetching sessions:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch sessions');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch sessions on component mount and when dependencies change
+  useEffect(() => {
     fetchSessions();
-  }, [currentPage, sessionsPerPage]);
+  }, [currentPage, sessionsPerPage, sortBy, sortOrder]);
 
   // Filter Sessions
   useEffect(() => {
@@ -171,166 +173,234 @@ const Sessions: React.FC = () => {
     setFilteredSessions(filtered);
   }, [searchTerm, sessions]);
 
+  // Pagination handler
+  const paginate = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
 
-    // Pagination handler
-    const paginate = (pageNumber: number) => {
-      setCurrentPage(pageNumber);
-    };
+  // Sorting handler
+  const handleSort = (column: string) => {
+    const newSortOrder = sortBy === column && sortOrder === 'asc' ? 'desc' : 'asc';
+    setSortBy(column);
+    setSortOrder(newSortOrder);
+    setCurrentPage(1); // Reset to first page on sort change
+  };
 
+  // FOR ADMINS TO UPDATE
+  const handleUpdateStatus = async (sessionId: string, newStatus: 'successful' | 'unsuccessful' | 'cancelled') => {
+    try {
+      const response = await fetch(`${API_URL}/sessions/${sessionId}/update-status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
 
-    // FOR ADMINS TO UPDATE
-const handleUpdateStatus = async (sessionId: string, newStatus: 'successful' | 'unsuccessful' | 'cancelled') => {
-  try {
-    const response = await fetch(`${API_URL}/sessions/${sessionId}/update-status`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ status: newStatus }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to update session status');
-    }
-
-    const data = await response.json();
-
-    // Update the sessions state with the new status
-    setSessions(prevSessions =>
-      prevSessions.map(session =>
-        session._id === sessionId
-          ? { ...session, status: newStatus }
-          : session
-      )
-    );
-
-    // Show success message
-    alert(data.message || 'Status updated successfully');
-  } catch (error) {
-    console.error('Error updating session status:', error);
-    alert('Failed to update session status. Please try again.');
-  }
-};
-  
-    // Update meeting link handler
-    const handleUpdateMeetingLink = async (sessionId: string, link: string) => {
-      try {
-        console.log('Updating meeting link for session:', sessionId, 'with link:', link);
-    
-        const response = await fetch(`${API_URL}/sessions/${sessionId}/add-link`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ meetingLink: link }),
-        });
-    
-        console.log('Response status:', response.status);
-    
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error('Error response data:', errorData);
-          throw new Error('Failed to update meeting link');
-        }
-    
-        setSessions(prevSessions =>
-          prevSessions.map((session: Session) =>
-            session._id === sessionId
-              ? { ...session, meetingLink: link }
-              : session
-          )
-        );
-    
-        setShowLinkModal(false);
-        setSelectedSessionId(null);
-        setMeetingLink('');
-      } catch (error) {
-        console.error('Error updating meeting link:', error);
-        alert('Failed to update meeting link. Please try again.');
+      if (!response.ok) {
+        throw new Error('Failed to update session status');
       }
-    };
+
+      const data = await response.json();
+
+      // Update the sessions state with the new status
+      setSessions(prevSessions =>
+        prevSessions.map(session =>
+          session._id === sessionId
+            ? { ...session, status: newStatus }
+            : session
+        )
+      );
+
+      // Show success message
+      alert(data.message || 'Status updated successfully');
+    } catch (error) {
+      console.error('Error updating session status:', error);
+      alert('Failed to update session status. Please try again.');
+    }
+  };
   
-    // Mobile card renderer
-    const renderMobileCard = (session: Session) => (
-      <div key={session._id} className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
-        <div className="flex justify-between items-start mb-3">
-          <div>
-            <h3 className="font-medium text-gray-900">{session.user.name}</h3>
-            <p className="text-sm text-gray-500">
-              {new Date(session.time).toLocaleDateString()}
-              </p>
+  // Update meeting link handler
+  const handleUpdateMeetingLink = async (sessionId: string, link: string) => {
+    try {
+      console.log('Updating meeting link for session:', sessionId, 'with link:', link);
+  
+      const response = await fetch(`${API_URL}/sessions/${sessionId}/add-link`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ meetingLink: link }),
+      });
+  
+      console.log('Response status:', response.status);
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error response data:', errorData);
+        throw new Error('Failed to update meeting link');
+      }
+  
+      setSessions(prevSessions =>
+        prevSessions.map((session: Session) =>
+          session._id === sessionId
+            ? { ...session, meetingLink: link }
+            : session
+        )
+      );
+  
+      setShowLinkModal(false);
+      setSelectedSessionId(null);
+      setMeetingLink('');
+    } catch (error) {
+      console.error('Error updating meeting link:', error);
+      alert('Failed to update meeting link. Please try again.');
+    }
+  };
+
+  // Add comment handler
+  const handleAddComment = async (sessionId: string, comment: string) => {
+    try {
+      const response = await fetch(`${API_URL}/sessions/${sessionId}/comment`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ comment }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add comment');
+      }
+
+      const data = await response.json();
+
+      // Update the sessions state with the new comment
+      setSessions(prevSessions =>
+        prevSessions.map(session =>
+          session._id === sessionId
+            ? { ...session, comment } // Update the comment
+            : session
+        )
+      );
+
+      alert(data.message || 'Comment added successfully');
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      alert('Failed to add comment. Please try again.');
+    }
+  };
+
+  // Export Sessions function
+  const exportSessions = async () => {
+    try {
+      const response = await fetch(`${API_URL}/sessions/export`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to export sessions');
+      }
+
+      // Create a blob from the response
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'sessions_export.csv'; // Set the filename for the download
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url); // Clean up the URL object
+    } catch (error) {
+      console.error('Error exporting sessions:', error);
+      alert('Failed to export sessions. Please try again.');
+    }
+  };
+
+  // Mobile card renderer
+  const renderMobileCard = (session: Session) => (
+    <div key={session._id} className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+      <div className="flex justify-between items-start mb-3">
+        <div>
+          <h3 className="font-medium text-gray-900">{session.user.name}</h3>
+          <p className="text-sm text-gray-500">
+            {new Date(session.time).toLocaleDateString()}
+          </p>
+        </div>
+        <div className="flex flex-col gap-2">
+          <ProgressBadge progress={getSessionProgress(session.time)} />
+          <StatusBadge status={session.status} />
+        </div>
       </div>
-      <div className="flex flex-col gap-2">
-        <ProgressBadge progress={getSessionProgress(session.time)} />
-        <StatusBadge status={session.status} />
+        
+      <div className="space-y-2 text-sm text-gray-600">
+        <div className="flex items-center">
+          <Headphones className="h-4 w-4 mr-2" />
+          <span>{session.listener.name}</span>
+        </div>
+        <div className="flex items-center">
+          <Clock className="h-4 w-4 mr-2" />
+          <span>{new Date(session.time).toLocaleTimeString()}</span>
+        </div>
+        <div className="flex items-center">
+          <Calendar className="h-4 w-4 mr-2" />
+          <span>{session.topic}</span>
+        </div>
+      </div>
+  
+      <div className="mt-4 flex justify-between items-center">
+        {session.meetingLink && (
+          <a 
+            href={session.meetingLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center text-blue-500 hover:text-blue-700"
+          >
+            <Video className="h-4 w-4 mr-1" />
+            <span>Join Meet</span>
+          </a>
+        )}
+        <div className="flex space-x-3">
+          <button 
+            className="text-yellow-500 hover:text-yellow-700"
+            onClick={() => {
+              setSelectedSessionId(session._id);
+              setMeetingLink(session.meetingLink || '');
+              setShowLinkModal(true);
+            }}
+          >
+            <Video className="h-5 w-5" />
+          </button>
+        </div>
+        <select
+          value={session.status}
+          onChange={(e) => handleUpdateStatus(session._id, e.target.value as Session['status'])}
+          className="block w-32 rounded-md border-gray-300 bg-gray-100 
+            text-gray-900 font-medium shadow-sm focus:border-blue-500 
+            focus:ring-blue-500 text-sm py-1.5"
+        >
+          <option value="successful" className="bg-gray-100 text-gray-900">Successful</option>
+          <option value="unsuccessful" className="bg-gray-100 text-gray-900">Unsuccessful</option>
+          <option value="cancelled" className="bg-gray-100 text-gray-900">Cancelled</option>
+        </select>
       </div>
     </div>
-        
-        <div className="space-y-2 text-sm text-gray-600">
-          <div className="flex items-center">
-            <Headphones className="h-4 w-4 mr-2" />
-            <span>{session.listener.name}</span>
-          </div>
-          <div className="flex items-center">
-            <Clock className="h-4 w-4 mr-2" />
-            <span>{new Date(session.time).toLocaleTimeString()}</span>
-          </div>
-          <div className="flex items-center">
-            <Calendar className="h-4 w-4 mr-2" />
-            <span>{session.topic}</span>
-          </div>
-        </div>
-  
-        <div className="mt-4 flex justify-between items-center">
-          {session.meetingLink && (
-            <a 
-              href={session.meetingLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center text-blue-500 hover:text-blue-700"
-            >
-              <Video className="h-4 w-4 mr-1" />
-              <span>Join Meet</span>
-            </a>
-          )}
-          <div className="flex space-x-3">
-            <button 
-              className="text-yellow-500 hover:text-yellow-700"
-              onClick={() => {
-                setSelectedSessionId(session._id);
-                setMeetingLink(session.meetingLink || '');
-                setShowLinkModal(true);
-              }}
-            >
-              <Video className="h-5 w-5" />
-            </button>
-          </div>
-          <select
-        value={session.status}
-        onChange={(e) => handleUpdateStatus(session._id, e.target.value as Session['status'])}
-        className="block w-32 rounded-md border-gray-300 bg-gray-100 
-          text-gray-900 font-medium shadow-sm focus:border-blue-500 
-          focus:ring-blue-500 text-sm py-1.5"
-      >
-        <option value="successful" className="bg-gray-100 text-gray-900">Successful</option>
-        <option value="unsuccessful" className="bg-gray-100 text-gray-900">Unsuccessful</option>
-        <option value="cancelled" className="bg-gray-100 text-gray-900">Cancelled</option>
-      </select>
-        </div>
-      </div>
-    );
+  );
 
-
-      // Table renderer
+  // Table renderer
   const renderTable = () => (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Listener</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Topic</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('user')}>User</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('listener')}>Listener</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('time')}>Time</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('topic')}>Topic</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -339,55 +409,53 @@ const handleUpdateStatus = async (sessionId: string, newStatus: 'successful' | '
         <tbody className="bg-white divide-y divide-gray-200">
           {filteredSessions.map((session: Session) => (
             <tr key={session._id}>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{session.user.name}</td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{session.listener.name}</td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-              {new Date(session.time).toLocaleString()}
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{session.topic}</td>
-            <td className="px-6 py-4 whitespace-nowrap">
-              <ProgressBadge progress={getSessionProgress(session.time)} />
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap">
-              <StatusBadge status={session.status} />
-            </td>
-              
-<td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-  <div className="flex space-x-2 items-center">
-    {session.meetingLink && (
-      <a
-        href={session.meetingLink}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-blue-600 hover:text-blue-900"
-      >
-        <Video className="h-5 w-5" />
-      </a>
-    )}
-    <button
-      onClick={() => {
-        setSelectedSessionId(session._id);
-        setMeetingLink(session.meetingLink || '');
-        setShowLinkModal(true);
-      }}
-      className="text-yellow-600 hover:text-yellow-900"
-    >
-      <Edit2 className="h-5 w-5" />
-    </button>
-    {/* Updated select styling */}
-    <select
-      value={session.status}
-      onChange={(e) => handleUpdateStatus(session._id, e.target.value as Session['status'])}
-      className="ml-2 block w-32 rounded-md border-gray-300 bg-gray-100 
-        text-gray-900 font-medium shadow-sm focus:border-blue-500 
-        focus:ring-blue-500 text-sm py-1.5"
-    >
-      <option value="successful" className="bg-gray-100 text-gray-900">Successful</option>
-      <option value="unsuccessful" className="bg-gray-100 text-gray-900">Unsuccessful</option>
-      <option value="cancelled" className="bg-gray-100 text-gray-900">Cancelled</option>
-    </select>
-  </div>
-</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{session.user.name}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{session.listener.name}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {new Date(session.time).toLocaleString()}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{session.topic}</td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <ProgressBadge progress={getSessionProgress(session.time)} />
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <StatusBadge status={session.status} />
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <div className="flex space-x-2 items-center">
+                  {session.meetingLink && (
+                    <a
+                      href={session.meetingLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-900"
+                    >
+                      <Video className="h-5 w-5" />
+                    </a>
+                  )}
+                  <button
+                    onClick={() => {
+                      setSelectedSessionId(session._id);
+                      setMeetingLink(session.meetingLink || '');
+                      setShowLinkModal(true);
+                    }}
+                    className="text-yellow-600 hover:text-yellow-900"
+                  >
+                    <Edit2 className="h-5 w-5" />
+                  </button>
+                  <select
+                    value={session.status}
+                    onChange={(e) => handleUpdateStatus(session._id, e.target.value as Session['status'])}
+                    className="ml-2 block w-32 rounded-md border-gray-300 bg-gray-100 
+                      text-gray-900 font-medium shadow-sm focus:border-blue-500 
+                      focus:ring-blue-500 text-sm py-1.5"
+                  >
+                    <option value="successful" className="bg-gray-100 text-gray-900">Successful</option>
+                    <option value="unsuccessful" className="bg-gray-100 text-gray-900">Unsuccessful</option>
+                    <option value="cancelled" className="bg-gray-100 text-gray-900">Cancelled</option>
+                  </select>
+                </div>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -418,6 +486,16 @@ const handleUpdateStatus = async (sessionId: string, newStatus: 'successful' | '
                     onChange={(e) => setMeetingLink(e.target.value)}
                   />
                 </div>
+                <div className="mt-2">
+                  <input
+                    type="text"
+                    className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm 
+                      border-gray-700 rounded-md bg-gray-800 text-white placeholder-gray-400"
+                    placeholder="Enter comment (optional)"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -428,7 +506,12 @@ const handleUpdateStatus = async (sessionId: string, newStatus: 'successful' | '
                 shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 
                 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 
                 sm:w-auto sm:text-sm"
-              onClick={() => selectedSessionId && handleUpdateMeetingLink(selectedSessionId, meetingLink)}
+              onClick={() => {
+                if (selectedSessionId) {
+                  handleUpdateMeetingLink(selectedSessionId, meetingLink);
+                  handleAddComment(selectedSessionId, comment); // Add comment when updating link
+                }
+              }}
             >
               Update
             </button>
@@ -442,6 +525,7 @@ const handleUpdateStatus = async (sessionId: string, newStatus: 'successful' | '
                 setShowLinkModal(false);
                 setSelectedSessionId(null);
                 setMeetingLink('');
+                setComment(''); // Reset comment
               }}
             >
               Cancel
@@ -472,6 +556,46 @@ const handleUpdateStatus = async (sessionId: string, newStatus: 'successful' | '
               <Search className="h-5 w-5 text-gray-400" />
             </div>
           </div>
+          <button 
+            className="ml-4 flex items-center justify-center bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+            onClick={exportSessions}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            <span>Export Sessions</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Sorting Options */}
+      <div className="mt-4 flex justify-between items-center">
+        <div className="flex space-x-2">
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="border rounded-lg p-2 bg-white text-gray-800"
+          >
+            <option value="user">User</option>
+            <option value="listener">Listener</option>
+            <option value="time">Time</option>
+            <option value="topic">Topic</option>
+          </select>
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+            className="border rounded-lg p-2 bg-white text-gray-800"
+          >
+            <option value="asc">Ascending</option>
+            <option value="desc">Descending</option>
+          </select>
+          <button
+            onClick={() => {
+              setCurrentPage(1); // Reset to first page when sorting changes
+              fetchSessions(); // Fetch sessions with new sorting
+            }}
+            className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            Sort
+          </button>
         </div>
       </div>
 
