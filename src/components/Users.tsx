@@ -71,7 +71,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ userId, onClose }) 
 
     const fetchUserSessions = async () => {
       try {
-        const response = await fetch(`${API_URL}/user/${userId}/sessions`);
+        const response = await fetch(`${API_URL}/sessions/user/${userId}/sessions`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch user sessions');
