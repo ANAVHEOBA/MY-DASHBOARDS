@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Home, Users, UserCheck, BarChart2, Settings, LogOut, Menu, X, LucideIcon } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 
 interface NavItemProps {
   Icon: LucideIcon;
@@ -11,10 +11,10 @@ interface NavItemProps {
 }
 
 const Sidebar: React.FC = () => {
+  const router = useRouter();
   const [activeItem, setActiveItem] = useState<string>('Dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const navigate = useNavigate();
 
   const menuItems = [
     { icon: Home, text: 'Dashboard', path: '/' },
@@ -27,8 +27,13 @@ const Sidebar: React.FC = () => {
 
   const handleNavigation = (path: string, text: string) => {
     setActiveItem(text);
-    navigate(path);
+    router.push(path);
     setIsMobileMenuOpen(false);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('accessToken');
+    router.push('/auth');
   };
 
   return (
@@ -92,7 +97,7 @@ const Sidebar: React.FC = () => {
                 key={item.text}
                 Icon={item.icon}
                 text={item.text}
-                active={activeItem === item.text}
+                active={router.pathname === item.path}
                 collapsed={isCollapsed}
                 onClick={() => handleNavigation(item.path, item.text)}
               />
@@ -102,6 +107,7 @@ const Sidebar: React.FC = () => {
 
         {/* Logout Button */}
         <button 
+          onClick={handleLogout}
           className={`
             flex items-center p-4 hover:bg-gray-100 w-full
             ${isCollapsed ? 'justify-center' : ''}
