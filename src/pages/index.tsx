@@ -1,44 +1,64 @@
-// App.tsx
-import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Sidebar from '../components/Sidebar';
-import Dashboard from '../components/Dashboard';
-import Fans from '../components/Fans';
-import Users from '../components/Users'
-import Listeners from '../components/Listeners';
-import Sessions from '../components/Sessions';
-import Analytics from '../components/Analytics';
-import Settings from '../components/Settings';  // Import the Analytics component
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import dynamic from 'next/dynamic';
 
-const App: React.FC = () => {
-  const [isMounted, setIsMounted] = useState(false);
+// Dynamic imports
+const Sidebar = dynamic(() => import('@/components/Sidebar'), { ssr: false });
+const Dashboard = dynamic(() => import('@/components/Dashboard'), { ssr: false });
+const Fans = dynamic(() => import('@/components/Fans'), { ssr: false });
+const Users = dynamic(() => import('@/components/Users'), { ssr: false });
+const Listeners = dynamic(() => import('@/components/Listeners'), { ssr: false });
+const Sessions = dynamic(() => import('@/components/Sessions'), { ssr: false });
+const Analytics = dynamic(() => import('@/components/Analytics'), { ssr: false });
+const Settings = dynamic(() => import('@/components/Settings'), { ssr: false });
+const Login = dynamic(() => import('@/components/auth/Login'), { ssr: false });
+
+export default function Home() {
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setIsMounted(true); // This will only run on the client-side
-  }, []);
+    const checkAuth = () => {
+      const token = localStorage.getItem('accessToken');
+      setIsAuthenticated(!!token);
+      setIsLoading(false);
 
-  if (!isMounted) {
-    return null; // Render nothing on the server
+      if (!token) {
+        router.push('/auth');
+      }
+    };
+
+    checkAuth();
+  }, [router]);
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
   }
 
-  return (
-    <Router>
-      <div className="flex h-screen bg-gray-100">
-        <Sidebar />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/fans" element={<Fans />} />
-            <Route path="/users" element={<Users />} />
-            <Route path="/listeners" element={<Listeners />} />
-            <Route path="/sessions" element={<Sessions />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/settings" element={<Settings />} /> {/* Add the new route */}
-          </Routes>
-        </main>
-      </div>
-    </Router>
-  );
-};
+  // If not authenticated, the useEffect will redirect to /auth
+  if (!isAuthenticated) {
+    return null;
+  }
 
-export default App;
+  // Main dashboard layout
+  return (
+    <div className="flex h-screen bg-gray-100">
+      <Sidebar />
+      <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
+        {router.pathname === '/' && <Dashboard />}
+        {router.pathname === '/fans' && <Fans />}
+        {router.pathname === '/users' && <Users />}
+        {router.pathname === '/listeners' && <Listeners />}
+        {router.pathname === '/sessions' && <Sessions />}
+        {router.pathname === '/analytics' && <Analytics />}
+        {router.pathname === '/settings' && <Settings />}
+      </main>
+    </div>
+  );
+}
