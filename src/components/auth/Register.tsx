@@ -55,6 +55,7 @@ export default function Register({ onSuccess }: RegisterProps) {
         placeholder="Email"
         value={formData.email}
         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+        className="text-gray-900 placeholder:text-gray-500"
       />
       
       <Input
@@ -62,6 +63,7 @@ export default function Register({ onSuccess }: RegisterProps) {
         placeholder="Password"
         value={formData.password}
         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+        className="text-gray-900 placeholder:text-gray-500"
       />
       
       <Button type="submit" disabled={loading} className="w-full">
