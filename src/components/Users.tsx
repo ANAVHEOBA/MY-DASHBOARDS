@@ -194,7 +194,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ userId, onClose }) 
                   ))}
                 </ul>
               ) : (
-                <p>No sessions found for this user.</p>
+                <p className="mt-2 text-black font-semibold text-base">No sessions found for this user.</p>
               )}
             </div>
           </div>
