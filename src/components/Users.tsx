@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Eye } from 'lucide-react';
+import { getAuthHeaders, handleUnauthorized } from '../utils/api';
 
 const API_URL = 'https://ready-back-end.onrender.com';
 
@@ -53,7 +54,13 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ userId, onClose }) 
     const fetchUserDetails = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(`${API_URL}/users/${userId}`);
+        const response = await fetch(`${API_URL}/users/${userId}`, {
+          headers: getAuthHeaders()
+        });
+        
+        if (response.status === 401) {
+          return handleUnauthorized(response);
+        }
         
         if (!response.ok) {
           throw new Error('Failed to fetch user details');
@@ -71,7 +78,13 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ userId, onClose }) 
 
     const fetchUserSessions = async () => {
       try {
-        const response = await fetch(`${API_URL}/sessions/user/${userId}/sessions`);
+        const response = await fetch(`${API_URL}/sessions/user/${userId}/sessions`, {
+          headers: getAuthHeaders()
+        });
+        
+        if (response.status === 401) {
+          return handleUnauthorized(response);
+        }
         
         if (!response.ok) {
           throw new Error('Failed to fetch user sessions');
@@ -222,8 +235,15 @@ const Users: React.FC = () => {
       setIsLoading(true);
       const skip = (currentPage - 1) * usersPerPage;
       const response = await fetch(
-        `${API_URL}/users?skip=${skip}&limit=${usersPerPage}&sortBy=${sortBy}&sortOrder=${sortOrder}`
+        `${API_URL}/users?skip=${skip}&limit=${usersPerPage}&sortBy=${sortBy}&sortOrder=${sortOrder}`,
+        {
+          headers: getAuthHeaders()
+        }
       );
+
+      if (response.status === 401) {
+        return handleUnauthorized(response);
+      }
 
       if (!response.ok) {
         throw new Error('Failed to fetch users');
@@ -266,10 +286,12 @@ const Users: React.FC = () => {
     try {
       const response = await fetch(`${API_URL}/users/export`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders()
       });
+
+      if (response.status === 401) {
+        return handleUnauthorized(response);
+      }
 
       if (!response.ok) {
         throw new Error('Failed to export users');

@@ -10,6 +10,7 @@ import {
   Clock,
   Headphones 
 } from 'lucide-react';
+import { getAuthHeaders, handleUnauthorized } from '../utils/api';
 
 interface User {
   _id: string;
@@ -111,8 +112,15 @@ const Sessions: React.FC = () => {
       setIsLoading(true);
       const skip = (currentPage - 1) * sessionsPerPage;
       const response = await fetch(
-        `${API_URL}/sessions/platform/all?limit=${sessionsPerPage}&skip=${skip}&sortBy=${sortBy}&sortOrder=${sortOrder}`
+        `${API_URL}/sessions/platform/all?limit=${sessionsPerPage}&skip=${skip}&sortBy=${sortBy}&sortOrder=${sortOrder}`,
+        {
+          headers: getAuthHeaders()
+        }
       );
+      
+      if (response.status === 401) {
+        return handleUnauthorized(response);
+      }
       
       if (!response.ok) {
         throw new Error('Failed to fetch sessions');
@@ -191,11 +199,13 @@ const Sessions: React.FC = () => {
     try {
       const response = await fetch(`${API_URL}/sessions/${sessionId}/update-status`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ status: newStatus }),
       });
+  
+      if (response.status === 401) {
+        return handleUnauthorized(response);
+      }
 
       if (!response.ok) {
         throw new Error('Failed to update session status');
@@ -227,11 +237,13 @@ const Sessions: React.FC = () => {
   
       const response = await fetch(`${API_URL}/sessions/${sessionId}/add-link`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ meetingLink: link }),
       });
+  
+      if (response.status === 401) {
+        return handleUnauthorized(response);
+      }
   
       console.log('Response status:', response.status);
   
@@ -263,11 +275,13 @@ const Sessions: React.FC = () => {
     try {
       const response = await fetch(`${API_URL}/sessions/${sessionId}/comment`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ comment }),
       });
+  
+      if (response.status === 401) {
+        return handleUnauthorized(response);
+      }
 
       if (!response.ok) {
         throw new Error('Failed to add comment');
@@ -296,10 +310,12 @@ const Sessions: React.FC = () => {
     try {
       const response = await fetch(`${API_URL}/sessions/export`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
       });
+  
+      if (response.status === 401) {
+        return handleUnauthorized(response);
+      }
 
       if (!response.ok) {
         throw new Error('Failed to export sessions');
