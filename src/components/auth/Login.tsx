@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
-import ChangePassword from './ChangePassword';
 
 const API_URI = 'https://ready-back-end.onrender.com';
 
@@ -19,7 +18,6 @@ interface AlertMessage {
 export default function Login({ onSuccess }: LoginProps) {
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState<AlertMessage>({ type: null, text: '' });
-  const [showChangePassword, setShowChangePassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -27,7 +25,6 @@ export default function Login({ onSuccess }: LoginProps) {
 
   const showAlert = (type: AlertType, text: string) => {
     setAlert({ type, text });
-    // Clear alert after 5 seconds
     setTimeout(() => {
       setAlert({ type: null, text: '' });
     }, 5000);
@@ -61,12 +58,6 @@ export default function Login({ onSuccess }: LoginProps) {
     }
   };
 
-  const handlePasswordChangeSuccess = () => {
-    setShowChangePassword(false);
-    showAlert('success', 'Password changed successfully! Please login with your new password.');
-    setFormData({ email: '', password: '' }); // Clear form after password change
-  };
-
   const Alert = ({ type, text }: { type: AlertType; text: string }) => {
     if (!type || !text) return null;
 
@@ -81,19 +72,6 @@ export default function Login({ onSuccess }: LoginProps) {
       </div>
     );
   };
-
-  if (showChangePassword) {
-    return (
-      <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-center mb-6">Change Password</h2>
-        <Alert type={alert.type} text={alert.text} />
-        <ChangePassword 
-          onSuccess={handlePasswordChangeSuccess}
-          onCancel={() => setShowChangePassword(false)}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -129,17 +107,6 @@ export default function Login({ onSuccess }: LoginProps) {
         >
           {loading ? 'Logging in...' : 'Login'}
         </Button>
-
-        <div className="text-center mt-4">
-          <Button 
-            type="button" 
-            variant="link" 
-            onClick={() => setShowChangePassword(true)}
-            className="text-sm text-blue-600 hover:text-blue-800 underline"
-          >
-            Change Password
-          </Button>
-        </div>
       </form>
     </div>
   );
