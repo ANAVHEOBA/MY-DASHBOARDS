@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Search, Plus, Eye, Edit2, XCircle, X, RefreshCw, MessageCircle } from 'lucide-react';
 import { Listener, FormErrors, Message, TimeSlot } from '../types/listener';
 import { DAYS_OF_WEEK, DEFAULT_TIME_SLOTS, GENDERS } from '../constants/listener';
+import { getAuthHeaders, handleUnauthorized } from '../utils/api';
 
 const API_URL = 'https://ready-back-end.onrender.com';
 
@@ -55,7 +56,13 @@ const Listeners: React.FC = () => {
   const fetchListeners = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${API_URL}/listeners?sortBy=${sortBy}&sortOrder=${sortOrder}`);
+      const response = await fetch(`${API_URL}/listeners?sortBy=${sortBy}&sortOrder=${sortOrder}`, {
+        headers: getAuthHeaders()
+      });
+      
+      if (response.status === 401) {
+        return handleUnauthorized(response);
+      }
       const data = await response.json();
       
       if (!response.ok) {
@@ -88,7 +95,9 @@ const Listeners: React.FC = () => {
   const fetchListenerDetails = async (listenerId: string) => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${API_URL}/listeners/${listenerId}`);
+      const response = await fetch(`${API_URL}/listeners/${listenerId}`, {
+        headers: getAuthHeaders()
+      });
       const data = await response.json();
 
       if (!response.ok) {
@@ -108,7 +117,9 @@ const Listeners: React.FC = () => {
 
   const fetchListenerSessions = async (listenerId: string) => {
     try {
-      const response = await fetch(`${API_URL}/sessions/listener/${listenerId}/sessions`);
+      const response = await fetch(`${API_URL}/sessions/listener/${listenerId}/sessions`, {
+        headers: getAuthHeaders()
+      });
       const data = await response.json();
 
       if (!response.ok) {
@@ -129,7 +140,9 @@ const Listeners: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`${API_URL}/listeners/${listenerId}/messages`);
+      const response = await fetch(`${API_URL}/listeners/${listenerId}/messages`, {
+        headers: getAuthHeaders()
+      });
       const data = await response.json();
 
       if (!response.ok) {
@@ -149,9 +162,7 @@ const Listeners: React.FC = () => {
     try {
       const response = await fetch(`${API_URL}/listeners/${selectedListener._id}/messages`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           subject: messageSubject,
           content: messageContent,
@@ -271,9 +282,7 @@ const Listeners: React.FC = () => {
 
       const response = await fetch(endpoint, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(listenerData)
       });
 
@@ -399,9 +408,7 @@ const Listeners: React.FC = () => {
     try {
       const response = await fetch(`${API_URL}/listeners/export`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
       });
 
       if (!response.ok) {

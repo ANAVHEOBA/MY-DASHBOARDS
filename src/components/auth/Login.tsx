@@ -1,7 +1,7 @@
-// Login.tsx
 import { useState } from 'react';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
+import ChangePassword from './ChangePassword';
 
 const API_URI = 'https://ready-back-end.onrender.com';
 
@@ -9,18 +9,34 @@ interface LoginProps {
   onSuccess: () => void;
 }
 
+type AlertType = 'success' | 'error' | null;
+
+interface AlertMessage {
+  type: AlertType;
+  text: string;
+}
+
 export default function Login({ onSuccess }: LoginProps) {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [alert, setAlert] = useState<AlertMessage>({ type: null, text: '' });
+  const [showChangePassword, setShowChangePassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
 
+  const showAlert = (type: AlertType, text: string) => {
+    setAlert({ type, text });
+    // Clear alert after 5 seconds
+    setTimeout(() => {
+      setAlert({ type: null, text: '' });
+    }, 5000);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setAlert({ type: null, text: '' });
 
     try {
       const response = await fetch(`${API_URI}/admin/auth`, {
@@ -36,39 +52,95 @@ export default function Login({ onSuccess }: LoginProps) {
       }
 
       localStorage.setItem('accessToken', data.accessToken);
+      showAlert('success', 'Login successful!');
       onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      showAlert('error', err instanceof Error ? err.message : 'Login failed');
     } finally {
       setLoading(false);
     }
   };
 
+  const handlePasswordChangeSuccess = () => {
+    setShowChangePassword(false);
+    showAlert('success', 'Password changed successfully! Please login with your new password.');
+    setFormData({ email: '', password: '' }); // Clear form after password change
+  };
+
+  const Alert = ({ type, text }: { type: AlertType; text: string }) => {
+    if (!type || !text) return null;
+
+    const alertClasses = {
+      success: 'bg-green-100 text-green-700 border-green-400',
+      error: 'bg-red-100 text-red-700 border-red-400',
+    };
+
+    return (
+      <div className={`p-4 rounded-md border ${type ? alertClasses[type] : ''} mb-4`}>
+        {text}
+      </div>
+    );
+  };
+
+  if (showChangePassword) {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-center mb-6">Change Password</h2>
+        <Alert type={alert.type} text={alert.text} />
+        <ChangePassword 
+          onSuccess={handlePasswordChangeSuccess}
+          onCancel={() => setShowChangePassword(false)}
+        />
+      </div>
+    );
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
-        <div className="bg-red-100 text-red-700 p-3 rounded">{error}</div>
-      )}
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-center mb-6">Login</h2>
       
-      <Input
-        type="email"
-        placeholder="Email"
-        value={formData.email}
-        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-        className="text-gray-900 placeholder:text-gray-500"
-      />
+      <Alert type={alert.type} text={alert.text} />
       
-      <Input
-        type="password"
-        placeholder="Password"
-        value={formData.password}
-        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-        className="text-gray-900 placeholder:text-gray-500"
-      />
-      
-      <Button type="submit" disabled={loading} className="w-full">
-        {loading ? 'Loading...' : 'Login'}
-      </Button>
-    </form>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-4">
+          <Input
+            type="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            className="text-gray-900 placeholder:text-gray-500"
+            required
+          />
+          
+          <Input
+            type="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            className="text-gray-900 placeholder:text-gray-500"
+            required
+          />
+        </div>
+        
+        <Button 
+          type="submit" 
+          disabled={loading} 
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+        >
+          {loading ? 'Logging in...' : 'Login'}
+        </Button>
+
+        <div className="text-center mt-4">
+          <Button 
+            type="button" 
+            variant="link" 
+            onClick={() => setShowChangePassword(true)}
+            className="text-sm text-blue-600 hover:text-blue-800 underline"
+          >
+            Change Password
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }
