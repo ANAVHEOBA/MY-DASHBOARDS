@@ -128,93 +128,143 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ userId, onClose }) 
     );
   }
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg w-full max-w-lg overflow-hidden">
-        <div className="p-6">
-          <div className="flex justify-between items-start mb-4">
-            <h2 className="text-2xl font-bold text-gray-900">User Details</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-500"
-            >
-              <span className="h-6 w-6">✖</span>
-            </button>
-          </div>
+  // ... rest of the code remains the same ...
 
-          <div className="space-y-4">
-            <img
-              src={user.picture || 'https://via.placeholder.com/150'}
-              alt={`${user.firstName} ${user.lastName}`}
-              className="w-32 h-32 rounded-full mx-auto"
-            />
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500">Name</label>
-                <p className="text-gray-900">{`${user.firstName} ${user.lastName}`}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Email</label>
-                <p className="text-gray-900">{user.email}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Contact</label>
-                <p className="text-gray-900">{user.contact || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Gender</label>
-                <p className="text-gray-900">{user.gender || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Occupation</label>
-                <p className="text-gray-900">{user.occupation || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Date of Birth</label>
-                <p className="text-gray-900">
-                  {user.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString() : 'N/A'}
-                </p>
-              </div>
-              <div className="col-span-2">
-                <label className="text-sm font-medium text-gray-500">Bio</label>
-                <p className="text-gray-900">{user.bio || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Joined</label>
-                <p className="text-gray-900">{new Date(user.createdAt).toLocaleDateString()}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Status</label>
-                <span className={`inline-block px-2 py-1 rounded-full text-xs ${
-                  user.verified 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
-                }`}>
-                  {user.verified ? 'Verified' : 'Unverified'}
-                </span>
-              </div>
+return (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div className="bg-white rounded-lg w-full max-w-lg overflow-hidden">
+      <div className="p-6">
+        <div className="flex justify-between items-start mb-4">
+          <h2 className="text-2xl font-bold text-gray-900">User Details</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-500"
+          >
+            <span className="h-6 w-6">✖</span>
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <img
+            src={user.picture || 'https://via.placeholder.com/150'}
+            alt={`${user.firstName} ${user.lastName}`}
+            className="w-32 h-32 rounded-full mx-auto"
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Name</label>
+              <p className="text-black font-medium text-base">{`${user.firstName} ${user.lastName}`}</p>
             </div>
-            <div className="mt-4">
-              <h3 className="text-lg font-semibold">User Sessions</h3>
-              {sessions.length > 0 ? (
-                <ul className="mt-2 space-y-2">
-                  {sessions.map(session => (
-                    <li key={session._id} className="border p-2 rounded">
-                      <p><strong>Topic:</strong> {session.topic}</p>
-                      <p><strong>Status:</strong> {session.status}</p>
-                      <p><strong>Time:</strong> {new Date(session.time).toLocaleString()}</p>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-2 text-black font-semibold text-base">No sessions found for this user.</p>
-              )}
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Email</label>
+              <p className="text-black font-medium text-base">{user.email}</p>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Contact</label>
+              <p className="text-black font-medium text-base">{user.contact || 'N/A'}</p>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Gender</label>
+              <p className="text-black font-medium text-base">{user.gender || 'N/A'}</p>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Occupation</label>
+              <p className="text-black font-medium text-base">{user.occupation || 'N/A'}</p>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Date of Birth</label>
+              <p className="text-black font-medium text-base">
+                {user.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString() : 'N/A'}
+              </p>
+            </div>
+            <div className="col-span-2">
+              <label className="text-sm font-semibold text-gray-700">Bio</label>
+              <p className="text-black font-medium text-base">{user.bio || 'N/A'}</p>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Joined</label>
+              <p className="text-black font-medium text-base">{new Date(user.createdAt).toLocaleDateString()}</p>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Status</label>
+              <span className={`inline-block px-2 py-1 rounded-full text-sm font-medium ${
+                user.verified 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                {user.verified ? 'Verified' : 'Unverified'}
+              </span>
             </div>
           </div>
+        
+
+<div className="mt-4">
+  <h3 className="text-lg font-bold text-gray-900 mb-3">User Sessions</h3>
+  {sessions.length > 0 ? (
+    <ul className="mt-2 space-y-3">
+      {sessions.map(session => (
+        <li key={session._id} className="border p-4 rounded-lg bg-gray-50 shadow-sm">
+          <div className="space-y-2">
+            <div className="flex items-center">
+              <span className="text-gray-700 font-semibold w-20">Topic:</span>
+              <span className="text-black font-medium">{session.topic}</span>
+            </div>
+            <div className="flex items-center">
+              <span className="text-gray-700 font-semibold w-20">Status:</span>
+              <span className={`font-medium px-2 py-1 rounded-full text-sm ${
+                session.status === 'completed' 
+                  ? 'bg-green-100 text-green-800' 
+                  : session.status === 'pending'
+                  ? 'bg-yellow-100 text-yellow-800'
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+              </span>
+            </div>
+            <div className="flex items-center">
+              <span className="text-gray-700 font-semibold w-20">Time:</span>
+              <span className="text-black font-medium">
+                {new Date(session.time).toLocaleString('en-US', {
+                  dateStyle: 'medium',
+                  timeStyle: 'short'
+                })}
+              </span>
+            </div>
+            <div className="flex items-center">
+              <span className="text-gray-700 font-semibold w-20">Created:</span>
+              <span className="text-black font-medium">
+                {new Date(session.createdAt).toLocaleString('en-US', {
+                  dateStyle: 'medium',
+                  timeStyle: 'short'
+                })}
+              </span>
+            </div>
+            <div className="flex items-center">
+              <span className="text-gray-700 font-semibold w-20">Updated:</span>
+              <span className="text-black font-medium">
+                {new Date(session.updatedAt).toLocaleString('en-US', {
+                  dateStyle: 'medium',
+                  timeStyle: 'short'
+                })}
+              </span>
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <div className="mt-2 p-4 rounded-lg bg-gray-50 border">
+      <p className="text-black font-medium text-base text-center">
+        No sessions found for this user.
+      </p>
+    </div>
+  )}
+</div>
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 const Users: React.FC = () => {
