@@ -106,7 +106,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ userId, onClose }) 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
         <div className="bg-white p-6 rounded-lg w-full max-w-lg">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500 mx-auto" />
         </div>
       </div>
     );
@@ -119,7 +119,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ userId, onClose }) 
           <p className="text-red-500 text-center">{error || 'User not found'}</p>
           <button
             onClick={onClose}
-            className="mt-4 w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600"
+            className="mt-4 w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600"
           >
             Close
           </button>
@@ -390,7 +390,7 @@ const Users: React.FC = () => {
 
       <div className="mt-4 flex justify-end space-x-2">
         <button 
-          className="p-1 text-blue-500 hover:text-blue-700"
+          className="text-red-500 hover:text-red-700"
           onClick={() => handleViewUser(user._id)}
         >
           <Eye className="h-5 w-5" />
@@ -435,7 +435,7 @@ const Users: React.FC = () => {
               setCurrentPage(1); // Reset to first page when sorting changes
               fetchUsers(); // Fetch users with new sorting
             }}
-            className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
           >
             Sort
           </button>
@@ -457,7 +457,7 @@ const Users: React.FC = () => {
 
       {isLoading ? (
         <div className="flex justify-center items-center h-48">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500" />
         </div>
       ) : error ? (
         <div className="p-4 text-red-500 text-center">
@@ -504,7 +504,7 @@ const Users: React.FC = () => {
                     <td className="px-4 py-3 text-sm">
                       <div className="flex space-x-2">
                         <button 
-                          className="text-blue-500 hover:text-blue-700"
+                          className="text-red-500 hover:text-red-700"
                           onClick={() => handleViewUser(user._id)}
                         >
                           <Eye className="h-4 w-4" />
@@ -526,7 +526,7 @@ const Users: React.FC = () => {
                   onClick={() => setCurrentPage(index + 1)}
                   className={`px-3 py-1 rounded-md text-sm ${
                     currentPage === index + 1 
-                      ? 'bg-blue-500 text-white' 
+                      ? 'bg-red-500 text-white' 
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
                 >

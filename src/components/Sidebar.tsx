@@ -73,10 +73,10 @@ const Sidebar: React.FC = () => {
         `}
       >
         {/* Header */}
-        <div className="bg-[#007BFF] p-4 flex items-center justify-between">
-          <h1 className={`text-white font-extrabold tracking-wider ${isCollapsed ? 'text-xl' : 'text-3xl'}`}>
-            {isCollapsed ? 'T' : 'TESLA'}
-          </h1>
+        <div className="bg-red-600 p-4 flex items-center justify-between">
+        <h1 className={`text-white font-extrabold tracking-wider ${isCollapsed ? 'text-xl' : 'text-2xl'}`}>
+    Ready Social
+  </h1>
           <button
             className="hidden lg:block text-white"
             onClick={() => setIsCollapsed(!isCollapsed)}
@@ -127,11 +127,11 @@ const NavItem: React.FC<NavItemProps> = ({ Icon, text, active, onClick, collapse
       onClick={onClick}
       className={`
         flex items-center py-2 px-3 rounded-lg cursor-pointer
-        ${active ? 'bg-[#D0E4FF] text-[#007BFF]' : 'text-gray-600 hover:bg-gray-100'}
+        ${active ? 'bg-red-100 text-red-600' : 'text-gray-600 hover:bg-gray-100'}
         ${collapsed ? 'justify-center' : ''}
       `}
     >
-      <Icon size={20} className={active ? 'text-[#007BFF]' : 'text-gray-400'} />
+      <Icon size={20} className={active ? 'text-red-600' : 'text-gray-400'} />
       {!collapsed && <span className="ml-3">{text}</span>}
     </li>
   );

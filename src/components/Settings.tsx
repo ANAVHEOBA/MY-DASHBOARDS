@@ -182,7 +182,7 @@ const Settings: React.FC = () => {
                       <Button 
                         type="submit" 
                         disabled={loading}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                        className="flex-1 bg-red-600 hover:bg-red-700 text-white"
                       >
                         {loading ? 'Changing...' : 'Change Password'}
                       </Button>
@@ -202,7 +202,7 @@ const Settings: React.FC = () => {
                 ) : (
                   <Button
                     onClick={() => setShowChangePassword(true)}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    className="w-full bg-red-600 hover:bg-red-700 text-white"
                   >
                     Change Password
                   </Button>
