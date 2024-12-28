@@ -495,7 +495,7 @@ const Sessions: React.FC = () => {
                 <div className="mt-2">
                   <input
                     type="url"
-                    className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm 
+                    className="shadow-sm focus:ring-blue-500 focus:border-red-500 block w-full sm:text-sm 
                       border-gray-700 rounded-md bg-gray-800 text-white placeholder-gray-400"
                     placeholder="Enter meeting link"
                     value={meetingLink}
@@ -505,7 +505,7 @@ const Sessions: React.FC = () => {
                 <div className="mt-2">
                   <input
                     type="text"
-                    className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm 
+                    className="shadow-sm focus:ring-blue-500 focus:border-red-500 block w-full sm:text-sm 
                       border-gray-700 rounded-md bg-gray-800 text-white placeholder-gray-400"
                     placeholder="Enter comment (optional)"
                     value={comment}
@@ -519,8 +519,8 @@ const Sessions: React.FC = () => {
             <button
               type="button"
               className="w-full inline-flex justify-center rounded-md border border-transparent 
-                shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 
-                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 
+                shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 
+                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 
                 sm:w-auto sm:text-sm"
               onClick={() => {
                 if (selectedSessionId) {
@@ -534,9 +534,9 @@ const Sessions: React.FC = () => {
             <button
               type="button"
               className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-600 
-                shadow-sm px-4 py-2 bg-gray-700 text-base font-medium text-gray-200 
-                hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 
-                focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+        shadow-sm px-4 py-2 bg-gray-700 text-base font-medium text-gray-200 
+        hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 
+        focus:ring-red-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
               onClick={() => {
                 setShowLinkModal(false);
                 setSelectedSessionId(null);
@@ -608,7 +608,7 @@ const Sessions: React.FC = () => {
               setCurrentPage(1); // Reset to first page when sorting changes
               fetchSessions(); // Fetch sessions with new sorting
             }}
-            className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
           >
             Sort
           </button>
@@ -642,7 +642,7 @@ const Sessions: React.FC = () => {
               onClick={() => paginate(index + 1)}
               className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
                 currentPage === index + 1
-                  ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                  ? 'z-10 bg-red-50 border-red-500 text-red-600'
                   : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
               }`}
             >

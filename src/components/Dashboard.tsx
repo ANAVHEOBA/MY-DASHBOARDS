@@ -142,9 +142,9 @@ const ListenerStats: React.FC<ListenerStatsProps> = ({ name, specialties, rating
   </div>
 );
 
-const Notification: React.FC<NotificationProps> = ({ text, time, type }) => {
+const Notification: React.FC<{ text: string; time: string; type: 'user' | 'listener' | 'session' }> = ({ text, time, type }) => {
   const icons = {
-    user: <User className="h-4 w-4 text-blue-500" />,
+    user: <User className="h-4 w-4 text-red-500" />,
     listener: <Headphones className="h-4 w-4 text-green-500" />,
     session: <Video className="h-4 w-4 text-purple-500" />
   };
@@ -164,14 +164,14 @@ const Dashboard: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('2024');
 
   return (
-    <div className="p-2 sm:p-6 bg-gray-50 min-h-screen">
+    <div className="p-2 sm:p-6 bg-white min-h-screen">
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <MetricCard 
           title="Total Users" 
           value="25,431" 
           change={12} 
-          icon={<Users className="text-blue-500" />} 
+          icon={<Users className="text-red-500" />} 
         />
         <MetricCard 
           title="Active Listeners" 
@@ -234,8 +234,8 @@ const Dashboard: React.FC = () => {
                       <XAxis dataKey="name" />
                       <YAxis />
                       <Tooltip />
-                      <Bar dataKey="totalSessions" fill="#9333EA" />
-                      <Bar dataKey="activeUsers" fill="#3B82F6" />
+                      <Bar dataKey="totalSessions" fill="#EF4444" />
+                      <Bar dataKey="activeUsers" fill="#FCA5A5"  />
                       <Bar dataKey="activeListeners" fill="#22C55E" />
                     </BarChart>
                   </ResponsiveContainer>
