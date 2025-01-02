@@ -235,7 +235,6 @@ const Listeners: React.FC = () => {
   }, [searchTerm, listeners]);
 
 
-  // ... (previous code) ...
 
   // Form validation
   const validateForm = (): boolean => {
@@ -497,30 +496,34 @@ return (
       <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Listeners</h2>
       <div className="flex space-x-2">
         <button 
-          className="flex items-center justify-center bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
-          onClick={refreshListeners}
-          disabled={isLoading}
+           className="flex items-center justify-center bg-gray-100 text-gray-700 px-4 py-2 rounded-lg 
+           hover:bg-gray-200 transition-colors"
+         onClick={refreshListeners}
+         disabled={isLoading}
         >
           <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
           <span>Refresh</span>
         </button>
         <button 
-          className="flex items-center justify-center bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
-          onClick={exportListeners}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          <span>Export Listeners</span>
-        </button>
-        <button 
-          className="flex items-center justify-center bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-          onClick={() => {
-            resetForm();
-            setShowModal(true);
-          }}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          <span>Add New Listener</span>
-        </button>
+    className="flex items-center justify-center bg-blue-600 text-white px-4 py-2 rounded-lg 
+      hover:bg-blue-700 transition-colors"
+    onClick={exportListeners}
+  >
+    <Plus className="h-4 w-4 mr-2" />
+    <span>Export Listeners</span>
+  </button>
+        {/* Add New - Green */}
+  <button 
+    className="flex items-center justify-center bg-green-600 text-white px-4 py-2 rounded-lg 
+      hover:bg-green-700 transition-colors"
+    onClick={() => {
+      resetForm();
+      setShowModal(true);
+    }}
+  >
+    <Plus className="h-4 w-4 mr-2" />
+    <span>Add New Listener</span>
+  </button>
       </div>
     </div>
 
@@ -602,35 +605,45 @@ return (
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="flex space-x-2">
-                        <button 
-                          className="text-red-600 hover:text-red-700"
+                        {/* View Details - Blue */}
+                         <button 
+                         className="text-blue-600 hover:text-blue-800 transition-colors"
                           onClick={() => {
-                            if (listener._id) {
-                              fetchListenerDetails(listener._id);
-                              fetchMessagesForListener(listener._id);
-                            }
-                          }}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                        <button 
-                          className="text-red-600 hover:text-red-700"
-                          onClick={() => handleEditClick(listener)}
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </button>
-                        <button className="text-red-500 hover:text-red-700">
-                          <XCircle className="h-4 w-4" />
-                        </button>
-                        <button 
-                          className="text-red-600 hover:text-red-700"
-                          onClick={() => {
-                            setSelectedListener(listener);
+                           if (listener._id) {
+                           fetchListenerDetails(listener._id);
+                           fetchMessagesForListener(listener._id);
+                              }
+                              }}
+                            title="View Details"
+                              >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                        {/* Edit - Green */}
+                       <button 
+                         className="text-green-600 hover:text-green-800 transition-colors"
+                           onClick={() => handleEditClick(listener)}
+                           title="Edit Listener"
+                                     >
+                             <Edit2 className="h-4 w-4" />
+                                    </button>
+                        {/* Delete - Red */}
+                          <button 
+                         className="text-red-600 hover:text-red-800 transition-colors"
+                          title="Delete Listener"
+                                   >
+                           <XCircle className="h-4 w-4" />
+                           </button>
+                         {/* Message - Purple */}
+                                <button 
+                             className="text-purple-600 hover:text-purple-800 transition-colors"
+                              onClick={() => {
+                             setSelectedListener(listener);
                             setShowMessageModal(true);
-                          }}
-                        >
-                          <MessageCircle className="h-4 w-4" />
-                        </button>
+                                }}
+                                title="Send Message"
+                                 >
+                                   <MessageCircle className="h-4 w-4" />
+                                    </button>
                       </div>
                     </td>
                   </tr>

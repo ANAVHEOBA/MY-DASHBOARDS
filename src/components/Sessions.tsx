@@ -8,7 +8,8 @@ import {
   Edit2, 
   Video,
   Clock,
-  Headphones 
+  Headphones,
+  RefreshCw
 } from 'lucide-react';
 import { getAuthHeaders, handleUnauthorized } from '../utils/api';
 
@@ -73,6 +74,35 @@ const ProgressBadge: React.FC<{ progress: SessionProgress }> = ({ progress }) =>
     </span>
   );
 };
+
+
+const rotateAnimation = `
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+`;
+
+const RefreshButton: React.FC<{ onClick: () => void; isLoading: boolean }> = ({ onClick, isLoading }) => {
+  return (
+    <>
+      <style>{rotateAnimation}</style>
+      <button
+        onClick={onClick}
+        disabled={isLoading}
+        className={`p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors
+          flex items-center justify-center ${isLoading ? 'cursor-not-allowed' : ''}`}
+        title="Refresh"
+      >
+        <RefreshCw 
+          className={`h-5 w-5 text-gray-600 
+            ${isLoading ? 'animate-spin' : 'transform transition-transform hover:rotate-180'}`}
+        />
+      </button>
+    </>
+  );
+};
+
 
 // Helper component for status badges
 const StatusBadge: React.FC<{ status: Session['status'] }> = ({ status }) => {
@@ -555,32 +585,51 @@ const Sessions: React.FC = () => {
   // Main return
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="sm:flex sm:items-center">
-        <div className="sm:flex-auto">
-          <h1 className="text-xl font-semibold text-gray-900">Sessions</h1>
-        </div>
-        <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-          <div className="relative rounded-md shadow-sm">
-            <input
-              type="text"
-              className="focus:ring-blue-500 focus:border-blue-500 block w-full pr-10 sm:text-sm border-gray-300 rounded-md"
-              placeholder="Search sessions..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400" />
-            </div>
-          </div>
-          <button 
-            className="ml-4 flex items-center justify-center bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
-            onClick={exportSessions}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            <span>Export Sessions</span>
-          </button>
-        </div>
+      // Updated header section
+<div className="sm:flex sm:items-center justify-between mb-6">
+  <div className="sm:flex-auto">
+    <h1 className="text-xl font-semibold text-gray-900">Sessions</h1>
+  </div>
+
+  <div className="mt-4 sm:mt-0 sm:flex items-center space-x-4">
+    {/* Refresh Button */}
+    <RefreshButton 
+      onClick={() => {
+        setCurrentPage(1);
+        fetchSessions();
+      }}
+      isLoading={isLoading}
+    />
+
+
+
+        
+        {/* Search Input */}
+    <div className="relative w-64">
+      <input
+        type="text"
+        className="w-full focus:ring-blue-500 focus:border-blue-500 block pr-10 
+          sm:text-sm border-gray-300 rounded-lg"
+        placeholder="Search sessions..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+        <Search className="h-5 w-5 text-gray-400" />
       </div>
+    </div>
+
+    {/* Export Button */}
+    <button 
+      className="flex items-center justify-center bg-green-500 text-white 
+        px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+      onClick={exportSessions}
+    >
+      <Plus className="h-4 w-4 mr-2" />
+      <span>Export Sessions</span>
+    </button>
+  </div>
+</div>
 
       {/* Sorting Options */}
       <div className="mt-4 flex justify-between items-center">
