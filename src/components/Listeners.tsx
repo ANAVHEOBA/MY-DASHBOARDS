@@ -6,7 +6,7 @@ import { getAuthHeaders, handleUnauthorized } from '../utils/api';
 
 const API_URL = 'https://ready-back-end.onrender.com';
 
-const Listeners: React.FC = () => {
+const Listeners: React.FC = (): JSX.Element => {
   // State Management
   const [listeners, setListeners] = useState<Listener[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -26,6 +26,7 @@ const Listeners: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [listenerSessions, setListenerSessions] = useState<any[]>([]);
+  const [availableDays, setAvailableDays] = useState<Set<string>>(new Set(DAYS_OF_WEEK));
 
   // Sorting state
   const [sortBy, setSortBy] = useState('name');
@@ -334,7 +335,7 @@ const Listeners: React.FC = () => {
         throw new Error(data.message || `Failed to ${selectedListener ? 'update' : 'create'} listener`);
       }
   
-      await refreshListeners();
+      await fetchListeners();
       setShowModal(false);
       resetForm();
       alert(`Listener ${selectedListener ? 'updated' : 'created'} successfully!`);
@@ -356,20 +357,43 @@ const Listeners: React.FC = () => {
       phoneNumber: '',
       availability: DAYS_OF_WEEK.map(day => ({
         dayOfWeek: day,
-        times: day === 'saturday' || day === 'sunday'
-          ? DEFAULT_TIME_SLOTS.weekend.map(slot => ({
-              ...slot,
-              isAvailable: true
-            }))
-          : DEFAULT_TIME_SLOTS.weekday.map(slot => ({
-              ...slot,
-              isAvailable: true
-            }))
+        times: []  // Start with empty times for each day
       }))
     });
+    setAvailableDays(new Set(DAYS_OF_WEEK));
     setFormErrors({});
     setSelectedListener(null);
   };
+
+
+  // Add this new function to handle day availability toggle
+const toggleDayAvailability = (dayOfWeek: string) => {
+  const newAvailableDays = new Set(availableDays);
+  if (newAvailableDays.has(dayOfWeek)) {
+    newAvailableDays.delete(dayOfWeek);
+  } else {
+    newAvailableDays.add(dayOfWeek);
+  }
+  setAvailableDays(newAvailableDays);
+
+  // Update the newListener state to reflect the change
+  setNewListener(prev => ({
+    ...prev,
+    availability: prev.availability.map(day => {
+      if (day.dayOfWeek === dayOfWeek) {
+        return {
+          ...day,
+          times: newAvailableDays.has(dayOfWeek) ? [{ startTime: '09:00', endTime: '17:00', isAvailable: true }] : []
+        };
+      }
+      return day;
+    })
+  }));
+};
+
+
+
+
 
   // Handle form input changes
   const handleInputChange = (field: keyof Listener, value: any) => {
@@ -404,24 +428,28 @@ const Listeners: React.FC = () => {
   };
 
   // Add new time slot
-  const addTimeSlot = (dayOfWeek: string) => {
-    setNewListener(prev => ({
-      ...prev,
-      availability: prev.availability.map(day => {
-        if (day.dayOfWeek === dayOfWeek) {
-          return {
-            ...day,
-            times: [...day.times, { 
-              startTime: '09:00', 
-              endTime: '17:00',
-              isAvailable: true 
-            }]
-          };
-        }
-        return day;
-      })
-    }));
-  };
+  // Fix the addTimeSlot function
+const addTimeSlot = (dayOfWeek: string) => {
+  setNewListener(prev => ({
+    ...prev,
+    availability: prev.availability.map(day => {
+      if (day.dayOfWeek === dayOfWeek) {
+        return {
+          ...day,
+          times: [...day.times, { 
+            startTime: '09:00', 
+            endTime: '17:00', 
+            isAvailable: true 
+          }]
+        };
+      }
+      return day;
+    })
+  }));
+};
+
+
+
 
   // Remove time slot
   const removeTimeSlot = (dayOfWeek: string, index: number) => {
@@ -439,6 +467,13 @@ const Listeners: React.FC = () => {
 
   // Handle edit click
   const handleEditClick = (listener: Listener) => {
+    const availableDaysSet = new Set(
+      listener.availability
+        .filter(day => day.times.length > 0)
+        .map(day => day.dayOfWeek)
+    );
+    
+    setAvailableDays(availableDaysSet);
     setNewListener({
       _id: listener._id,
       name: listener.name || '',
@@ -446,32 +481,17 @@ const Listeners: React.FC = () => {
       gender: listener.gender || 'male',
       email: listener.email || '',
       phoneNumber: listener.phoneNumber || '',
-      availability: listener.availability?.length 
-        ? listener.availability.map(day => ({
-            dayOfWeek: day.dayOfWeek,
-            times: day.times.map(time => ({
-              startTime: time.startTime || '09:00',
-              endTime: time.endTime || '17:00',
-              isAvailable: time.isAvailable ?? true
-            }))
-          }))
-        : DAYS_OF_WEEK.map(day => ({
-            dayOfWeek: day,
-            times: day === 'saturday' || day === 'sunday'
-              ? DEFAULT_TIME_SLOTS.weekend.map(slot => ({
-                  ...slot,
-                  isAvailable: true
-                }))
-              : DEFAULT_TIME_SLOTS.weekday.map(slot => ({
-                  ...slot,
-                  isAvailable: true
-                }))
-          }))
+      availability: DAYS_OF_WEEK.map(day => ({
+        dayOfWeek: day,
+        times: listener.availability.find(d => d.dayOfWeek === day)?.times || []
+      }))
     });
     
     setSelectedListener(listener);
     setShowModal(true);
   };
+
+  
 
   // Pagination
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
@@ -487,88 +507,88 @@ const Listeners: React.FC = () => {
   };
 
 
-  // ... (previous code) ...
 
-return (
-  <div className="p-2 sm:p-4 md:p-6">
-    {/* Header Section */}
-    <div className="flex justify-between items-center mb-6">
-      <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Listeners</h2>
-      <div className="flex space-x-2">
-        <button 
-           className="flex items-center justify-center bg-gray-100 text-gray-700 px-4 py-2 rounded-lg 
-           hover:bg-gray-200 transition-colors"
-         onClick={refreshListeners}
-         disabled={isLoading}
+  return (
+    <div className="p-2 sm:p-4 md:p-6">
+      {/* Header Section */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Listeners</h2>
+        <div className="flex space-x-2">
+          <button 
+            className="flex items-center justify-center bg-gray-100 text-gray-700 px-4 py-2 rounded-lg 
+            hover:bg-gray-200 transition-colors"
+            onClick={refreshListeners}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
+          </button>
+          <button 
+            className="flex items-center justify-center bg-blue-600 text-white px-4 py-2 rounded-lg 
+            hover:bg-blue-700 transition-colors"
+            onClick={exportListeners}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            <span>Export Listeners</span>
+          </button>
+          <button 
+            className="flex items-center justify-center bg-green-600 text-white px-4 py-2 rounded-lg 
+            hover:bg-green-700 transition-colors"
+            onClick={() => {
+              resetForm();
+              setShowModal(true);
+            }}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            <span>Add New Listener</span>
+          </button>
+        </div>
+      </div>
+  
+      {/* Sorting Section */}
+      <div className="mb-6 flex space-x-2">
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="border rounded-lg p-2 bg-white text-gray-800"
         >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-          <span>Refresh</span>
+          <option value="name">Name</option>
+          <option value="gender">Gender</option>
+        </select>
+        <select
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value)}
+          className="border rounded-lg p-2 bg-white text-gray-800"
+        >
+          <option value="asc">Ascending</option>
+          <option value="desc">Descending</option>
+        </select>
+        <button
+          onClick={() => {
+            setCurrentPage(1);
+            fetchListeners();
+          }}
+          className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+        >
+          Sort
         </button>
-        <button 
-    className="flex items-center justify-center bg-blue-600 text-white px-4 py-2 rounded-lg 
-      hover:bg-blue-700 transition-colors"
-    onClick={exportListeners}
-  >
-    <Plus className="h-4 w-4 mr-2" />
-    <span>Export Listeners</span>
-  </button>
-        {/* Add New - Green */}
-  <button 
-    className="flex items-center justify-center bg-green-600 text-white px-4 py-2 rounded-lg 
-      hover:bg-green-700 transition-colors"
-    onClick={() => {
-      resetForm();
-      setShowModal(true);
-    }}
-  >
-    <Plus className="h-4 w-4 mr-2" />
-    <span>Add New Listener</span>
-  </button>
       </div>
-    </div>
-
-    {/* Sorting Section */}
-    <div className="mb-6 flex space-x-2">
-      <select
-        value={sortBy}
-        onChange={(e) => setSortBy(e.target.value)}
-        className="border rounded-lg p-2 bg-white text-gray-800"
-      >
-        <option value="name">Name</option>
-        <option value="gender">Gender</option>
-      </select>
-      <select
-        value={sortOrder}
-        onChange={(e) => setSortOrder(e.target.value)}
-        className="border rounded-lg p-2 bg-white text-gray-800"
-      >
-        <option value="asc">Ascending</option>
-        <option value="desc">Descending</option>
-      </select>
-      <button
-        onClick={() => {
-          setCurrentPage(1);
-          fetchListeners();
-        }}
-        className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-      >
-        Sort
-      </button>
-    </div>
-
-    {/* Search Section */}
-    <div className="mb-6">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-        <input
-          type="text"
-          placeholder="Search by name..."
-          className="w-full pl-10 pr-4 py-2 border rounded-lg text-gray-800"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+  
+      {/* Search Section */}
+      <div className="mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <input
+            type="text"
+            placeholder="Search by name..."
+            className="w-full pl-10 pr-4 py-2 border rounded-lg text-gray-800"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
       </div>
-    </div>
+  
+
 
     {/* Loading and Error States */}
     {isLoading ? (
@@ -605,45 +625,45 @@ return (
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="flex space-x-2">
-                        {/* View Details - Blue */}
-                         <button 
-                         className="text-blue-600 hover:text-blue-800 transition-colors"
+                        {/* View Details Button */}
+                        <button 
+                          className="text-blue-600 hover:text-blue-800 transition-colors"
                           onClick={() => {
-                           if (listener._id) {
-                           fetchListenerDetails(listener._id);
-                           fetchMessagesForListener(listener._id);
-                              }
-                              }}
-                            title="View Details"
-                              >
-                              <Eye className="h-4 w-4" />
-                            </button>
-                        {/* Edit - Green */}
-                       <button 
-                         className="text-green-600 hover:text-green-800 transition-colors"
-                           onClick={() => handleEditClick(listener)}
-                           title="Edit Listener"
-                                     >
-                             <Edit2 className="h-4 w-4" />
-                                    </button>
-                        {/* Delete - Red */}
-                          <button 
-                         className="text-red-600 hover:text-red-800 transition-colors"
+                            if (listener._id) {
+                              fetchListenerDetails(listener._id);
+                              fetchMessagesForListener(listener._id);
+                            }
+                          }}
+                          title="View Details"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        {/* Edit Button */}
+                        <button 
+                          className="text-green-600 hover:text-green-800 transition-colors"
+                          onClick={() => handleEditClick(listener)}
+                          title="Edit Listener"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                        {/* Delete Button */}
+                        <button 
+                          className="text-red-600 hover:text-red-800 transition-colors"
                           title="Delete Listener"
-                                   >
-                           <XCircle className="h-4 w-4" />
-                           </button>
-                         {/* Message - Purple */}
-                                <button 
-                             className="text-purple-600 hover:text-purple-800 transition-colors"
-                              onClick={() => {
-                             setSelectedListener(listener);
+                        >
+                          <XCircle className="h-4 w-4" />
+                        </button>
+                        {/* Message Button */}
+                        <button 
+                          className="text-purple-600 hover:text-purple-800 transition-colors"
+                          onClick={() => {
+                            setSelectedListener(listener);
                             setShowMessageModal(true);
-                                }}
-                                title="Send Message"
-                                 >
-                                   <MessageCircle className="h-4 w-4" />
-                                    </button>
+                          }}
+                          title="Send Message"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -669,10 +689,10 @@ return (
                   onClick={() => paginate(index + 1)}
                   className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
                     currentPage === index + 1
-                    ? 'z-10 bg-red-50 border-red-500 text-red-600'
-                    : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                }`}
-              >
+                      ? 'z-10 bg-red-50 border-red-500 text-red-600'
+                      : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                  }`}
+                >
                   {index + 1}
                 </button>
               ))}
@@ -683,9 +703,8 @@ return (
     )}
 
 
-
-    {/* Details Modal */}
-    {selectedListener && showDetailsModal && (
+        {/* Details Modal */}
+        {selectedListener && showDetailsModal && (
       <div className="fixed inset-0 z-50 overflow-y-auto">
         <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
           <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
@@ -695,6 +714,7 @@ return (
               <h3 className="text-lg font-medium text-gray-900 mb-4">Listener Details</h3>
               
               <div className="space-y-4">
+                {/* Basic Info */}
                 <div>
                   <label className="font-medium text-gray-800">Name:</label>
                   <p className="text-gray-900">{selectedListener.name}</p>
@@ -720,6 +740,7 @@ return (
                   <p className="text-gray-900">{selectedListener.phoneNumber}</p>
                 </div>
 
+                {/* Availability Section */}
                 <div>
                   <label className="font-medium text-gray-800">Availability:</label>
                   <div className="mt-2 space-y-2">
@@ -739,7 +760,7 @@ return (
                   </div>
                 </div>
 
-                {/* Listener Sessions Section */}
+                {/* Sessions Section */}
                 <div>
                   <label className="font-medium text-gray-800">Sessions:</label>
                   <div className="mt-2 space-y-2">
@@ -780,8 +801,9 @@ return (
       </div>
     )}
 
-    {/* Add/Edit Modal */}
-    {showModal && (
+
+        {/* Add/Edit Modal */}
+        {showModal && (
       <div className="fixed inset-0 z-50 overflow-y-auto">
         <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
           <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
@@ -820,11 +842,6 @@ return (
                     <p className="mt-1 text-xs text-red-600">{formErrors.description}</p>
                   )}
                 </div>
-
-                {/* Continue with other form fields... */}
-
-
-                // ... (continuing from previous Add/Edit Modal code) ...
 
                 {/* Gender Select */}
                 <div>
@@ -877,62 +894,72 @@ return (
 
                 {/* Availability Section */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Availability*
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Availability*</label>
                   <div className="space-y-4">
                     {newListener.availability.map((day) => (
                       <div key={day.dayOfWeek} className="border rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium capitalize">{day.dayOfWeek}</h4>
-                          <button
-                            type="button"
-                            onClick={() => addTimeSlot(day.dayOfWeek)}
-                            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                          >
-                            + Add Time Slot
-                          </button>
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={availableDays.has(day.dayOfWeek)}
+                              onChange={() => toggleDayAvailability(day.dayOfWeek)}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <h4 className="font-medium capitalize">{day.dayOfWeek}</h4>
+                          </div>
+                          {availableDays.has(day.dayOfWeek) && (
+                            <button
+                              type="button"
+                              onClick={() => addTimeSlot(day.dayOfWeek)}
+                              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                            >
+                              + Add Time Slot
+                            </button>
+                          )}
                         </div>
-                        <div className="space-y-2">
-                          {day.times.map((time, timeIndex) => (
-                            <div key={timeIndex} className="flex items-center space-x-2">
-                              <input
-                                type="time"
-                                value={time.startTime}
-                                onChange={(e) => handleTimeSlotChange(
-                                  day.dayOfWeek,
-                                  timeIndex,
-                                  'startTime',
-                                  e.target.value
+                        {availableDays.has(day.dayOfWeek) && (
+                          <div className="space-y-2">
+                            {day.times.map((time, timeIndex) => (
+                              <div key={timeIndex} className="flex items-center space-x-2">
+                                <input
+                                  type="time"
+                                  value={time.startTime}
+                                  onChange={(e) => handleTimeSlotChange(
+                                    day.dayOfWeek,
+                                    timeIndex,
+                                    'startTime',
+                                    e.target.value
+                                  )}
+                                  className="rounded-md border-gray-300 shadow-sm px-3 py-2 text-gray-900 font-medium
+                                    focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                />
+                                <span className="text-gray-900 font-medium">to</span>
+                                <input
+                                  type="time"
+                                  value={time.endTime}
+                                  onChange={(e) => handleTimeSlotChange(
+                                    day.dayOfWeek,
+                                    timeIndex,
+                                    'endTime',
+                                    e.target.value
+                                  )}
+                                  className="rounded-md border-gray-300 shadow-sm px-3 py-2 text-gray-900 font-medium
+                                    focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                />
+                                {day.times.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => removeTimeSlot(day.dayOfWeek, timeIndex)}
+                                    className="text-red-500 hover:text-red-700"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
                                 )}
-                                className="rounded-md border-gray-300 shadow-sm px-3 py-2 text-gray-900 font-medium
-                                  focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                              />
-                              <span className="text-gray-900 font-medium">to</span>
-                              <input
-                                type="time"
-                                value={time.endTime}
-                                onChange={(e) => handleTimeSlotChange(
-                                  day.dayOfWeek,
-                                  timeIndex,
-                                  'endTime',
-                                  e.target.value
-                                )}
-                                className="rounded-md border-gray-300 shadow-sm px-3 py-2 text-gray-900 font-medium
-                                  focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                              />
-                              {day.times.length > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => removeTimeSlot(day.dayOfWeek, timeIndex)}
-                                  className="text-red-500 hover:text-red-700"
-                                >
-                                  <X className="h-4 w-4" />
-                                </button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -975,8 +1002,8 @@ return (
       </div>
     )}
 
-    {/* Message Modal */}
-    {selectedListener && showMessageModal && (
+        {/* Message Modal */}
+        {selectedListener && showMessageModal && (
       <div className="fixed inset-0 z-50 overflow-y-auto">
         <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
           <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
@@ -1085,8 +1112,8 @@ return (
       </div>
     )}
   </div>
-);
+); 
 
-};
+}; 
 
 export default Listeners;
