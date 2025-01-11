@@ -15,7 +15,9 @@ import { getAuthHeaders, handleUnauthorized } from '../utils/api';
 
 interface User {
   _id: string;
-  name: string;
+  firstName?: string;  // Add these fields based on your actual user model
+  lastName?: string;
+  name?: string;
   email: string;
 }
 
@@ -157,6 +159,8 @@ const Sessions: React.FC = () => {
       }
 
       const data = await response.json();
+      console.log('Raw API Response:', data); // Add this line
+    console.log('First session example:', data.sessions?.[0]); // Add this line
       console.log('Raw session data:', data);
 
       if (data && Array.isArray(data.sessions)) {
@@ -226,6 +230,19 @@ const Sessions: React.FC = () => {
 
   // FOR ADMINS TO UPDATE
   const handleUpdateStatus = async (sessionId: string, newStatus: 'successful' | 'unsuccessful' | 'cancelled') => {
+    // Add confirmation dialog
+    const confirmMessage = `Are you sure you want to mark this session as ${newStatus}?`;
+    if (!window.confirm(confirmMessage)) {
+      // Reset the select element to its previous value
+      const session = sessions.find(s => s._id === sessionId);
+      if (session) {
+        const selectElement = document.querySelector(`select[data-session-id="${sessionId}"]`) as HTMLSelectElement;
+        if (selectElement) {
+          selectElement.value = session.status;
+        }
+      }
+      return;
+    }
     try {
       const response = await fetch(`${API_URL}/sessions/${sessionId}/update-status`, {
         method: 'PATCH',
@@ -236,13 +253,13 @@ const Sessions: React.FC = () => {
       if (response.status === 401) {
         return handleUnauthorized(response);
       }
-
+  
       if (!response.ok) {
         throw new Error('Failed to update session status');
       }
-
+  
       const data = await response.json();
-
+  
       // Update the sessions state with the new status
       setSessions(prevSessions =>
         prevSessions.map(session =>
@@ -252,13 +269,13 @@ const Sessions: React.FC = () => {
         )
       );
 
-      // Show success message
-      alert(data.message || 'Status updated successfully');
-    } catch (error) {
-      console.error('Error updating session status:', error);
-      alert('Failed to update session status. Please try again.');
-    }
-  };
+       // Show success message
+    alert(data.message || 'Status updated successfully');
+  } catch (error) {
+    console.error('Error updating session status:', error);
+    alert('Failed to update session status. Please try again.');
+  }
+};
   
   // Update meeting link handler
   const handleUpdateMeetingLink = async (sessionId: string, link: string) => {
@@ -423,16 +440,17 @@ const Sessions: React.FC = () => {
           </button>
         </div>
         <select
-          value={session.status}
-          onChange={(e) => handleUpdateStatus(session._id, e.target.value as Session['status'])}
-          className="block w-32 rounded-md border-gray-300 bg-gray-100 
-            text-gray-900 font-medium shadow-sm focus:border-blue-500 
-            focus:ring-blue-500 text-sm py-1.5"
-        >
-          <option value="successful" className="bg-gray-100 text-gray-900">Successful</option>
-          <option value="unsuccessful" className="bg-gray-100 text-gray-900">Unsuccessful</option>
-          <option value="cancelled" className="bg-gray-100 text-gray-900">Cancelled</option>
-        </select>
+  value={session.status}
+  data-session-id={session._id} // Add this line
+  onChange={(e) => handleUpdateStatus(session._id, e.target.value as Session['status'])}
+  className="ml-2 block w-32 rounded-md border-gray-300 bg-gray-100 
+    text-gray-900 font-medium shadow-sm focus:border-blue-500 
+    focus:ring-blue-500 text-sm py-1.5"
+>
+  <option value="successful" className="bg-gray-100 text-gray-900">Successful</option>
+  <option value="unsuccessful" className="bg-gray-100 text-gray-900">Unsuccessful</option>
+  <option value="cancelled" className="bg-gray-100 text-gray-900">Cancelled</option>
+</select>
       </div>
     </div>
   );
@@ -455,7 +473,13 @@ const Sessions: React.FC = () => {
         <tbody className="bg-white divide-y divide-gray-200">
           {filteredSessions.map((session: Session) => (
             <tr key={session._id}>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{session.user.name}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              {/* Add fallback options for different name fields */}
+              {session.user?.name || 
+               `${session.user?.firstName || ''} ${session.user?.lastName || ''}` ||
+               session.user?.email ||
+               'Unknown User'}
+            </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{session.listener.name}</td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 {new Date(session.time).toLocaleString()}
@@ -490,16 +514,17 @@ const Sessions: React.FC = () => {
                     <Edit2 className="h-5 w-5" />
                   </button>
                   <select
-                    value={session.status}
-                    onChange={(e) => handleUpdateStatus(session._id, e.target.value as Session['status'])}
-                    className="ml-2 block w-32 rounded-md border-gray-300 bg-gray-100 
-                      text-gray-900 font-medium shadow-sm focus:border-blue-500 
-                      focus:ring-blue-500 text-sm py-1.5"
-                  >
-                    <option value="successful" className="bg-gray-100 text-gray-900">Successful</option>
-                    <option value="unsuccessful" className="bg-gray-100 text-gray-900">Unsuccessful</option>
-                    <option value="cancelled" className="bg-gray-100 text-gray-900">Cancelled</option>
-                  </select>
+  value={session.status}
+  data-session-id={session._id} // Add this line
+  onChange={(e) => handleUpdateStatus(session._id, e.target.value as Session['status'])}
+  className="block w-32 rounded-md border-gray-300 bg-gray-100 
+    text-gray-900 font-medium shadow-sm focus:border-blue-500 
+    focus:ring-blue-500 text-sm py-1.5"
+>
+  <option value="successful" className="bg-gray-100 text-gray-900">Successful</option>
+  <option value="unsuccessful" className="bg-gray-100 text-gray-900">Unsuccessful</option>
+  <option value="cancelled" className="bg-gray-100 text-gray-900">Cancelled</option>
+</select>
                 </div>
               </td>
             </tr>
