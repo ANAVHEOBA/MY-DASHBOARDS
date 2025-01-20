@@ -34,13 +34,16 @@ interface Session {
   topic: string;
   time: string;
   meetingLink?: string;
-  status: 'successful' | 'unsuccessful' | 'cancelled';  
+  status: SessionStatus; 
   createdAt: string;
   updatedAt: string;
   comment?: string; // Add comment property
 }
 
 type SessionProgress = 'scheduled' | 'ongoing' | 'completed';
+
+
+type SessionStatus = 'successful' | 'unsuccessful' | 'cancelled' | 'pending';
 
 const API_URL = 'https://ready-back-end.onrender.com';
 
@@ -111,7 +114,8 @@ const StatusBadge: React.FC<{ status: Session['status'] }> = ({ status }) => {
   const statusClasses = {
     'successful': 'bg-green-100 text-green-800',
     'unsuccessful': 'bg-yellow-100 text-yellow-800',
-    'cancelled': 'bg-red-100 text-red-800'
+    'cancelled': 'bg-red-100 text-red-800',
+    'pending': 'bg-blue-100 text-blue-800'
   };
 
   return (
@@ -233,12 +237,51 @@ const Sessions: React.FC = () => {
   };
 
   // FOR ADMINS TO UPDATE
-  const handleUpdateStatus = async (sessionId: string, newStatus: 'successful' | 'unsuccessful' | 'cancelled') => {
+  const handleUpdateStatus = async (sessionId: string, newStatus: SessionStatus) => {
     // Add confirmation dialog with warning icon and status-specific message
+    const session = sessions.find(s => s._id === sessionId);
+    
+    if (session?.status === 'pending' && newStatus !== 'pending') {
+      // No confirmation needed when changing from pending to another status
+      try {
+        const response = await fetch(`${API_URL}/sessions/${sessionId}/update-status`, {
+          method: 'PATCH',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ status: newStatus }),
+        });
+  
+        if (response.status === 401) {
+          return handleUnauthorized(response);
+        }
+  
+        if (!response.ok) {
+          throw new Error('Failed to update session status');
+        }
+  
+        const data = await response.json();
+  
+        // Update the sessions state with the new status
+        setSessions(prevSessions =>
+          prevSessions.map(session =>
+            session._id === sessionId
+              ? { ...session, status: newStatus }
+              : session
+          )
+        );
+  
+        // Show success message
+        alert(data.message || 'Status updated successfully');
+      } catch (error) {
+        console.error('Error updating session status:', error);
+        alert('Failed to update session status. Please try again.');
+      }
+      return;
+    }
+  
+    // For non-pending status changes, show confirmation
     const confirmMessage = `⚠️ Warning: Are you sure you want to mark this session as "${newStatus}"?\n\nThis action cannot be undone.`;
     if (!window.confirm(confirmMessage)) {
       // Reset the select element to its previous value
-      const session = sessions.find(s => s._id === sessionId);
       if (session) {
         const selectElement = document.querySelector(`select[data-session-id="${sessionId}"]`) as HTMLSelectElement;
         if (selectElement) {
@@ -248,6 +291,7 @@ const Sessions: React.FC = () => {
       return;
     }
   
+    // Proceed with the status update after confirmation
     try {
       const response = await fetch(`${API_URL}/sessions/${sessionId}/update-status`, {
         method: 'PATCH',
@@ -273,37 +317,39 @@ const Sessions: React.FC = () => {
             : session
         )
       );
-
-       // Show success message
-    alert(data.message || 'Status updated successfully');
-  } catch (error) {
-    console.error('Error updating session status:', error);
-    alert('Failed to update session status. Please try again.');
-  }
-};
-
-const StatusSelect = ({ session }: { session: Session }) => (
-  <select
-    value={selectedStatuses[session._id] ? session.status : ''}
-    data-session-id={session._id}
-    onChange={(e) => {
-      const newStatus = e.target.value as Session['status'];
-      setSelectedStatuses(prev => ({
-        ...prev,
-        [session._id]: true
-      }));
-      handleUpdateStatus(session._id, newStatus);
-    }}
-    className="block w-32 rounded-md border-gray-300 bg-gray-100 
-      text-gray-900 font-medium shadow-sm focus:border-blue-500 
-      focus:ring-blue-500 text-sm py-1.5"
-  >
-    <option value="" disabled selected>Select status</option>
-    <option value="successful" className="bg-gray-100 text-gray-900">Successful</option>
-    <option value="unsuccessful" className="bg-gray-100 text-gray-900">Unsuccessful</option>
-    <option value="cancelled" className="bg-gray-100 text-gray-900">Cancelled</option>
-  </select>
-);
+  
+      // Show success message
+      alert(data.message || 'Status updated successfully');
+    } catch (error) {
+      console.error('Error updating session status:', error);
+      alert('Failed to update session status. Please try again.');
+    }
+  };
+  
+  const StatusSelect = ({ session }: { session: Session }) => {
+    const isPending = session.status === 'pending';
+  
+    return (
+      <select
+        value={isPending ? '' : session.status}
+        data-session-id={session._id}
+        onChange={(e) => {
+          const newStatus = e.target.value as SessionStatus;
+          handleUpdateStatus(session._id, newStatus);
+        }}
+        className="block w-32 rounded-md border-gray-300 bg-gray-100 
+          text-gray-900 font-medium shadow-sm focus:border-blue-500 
+          focus:ring-blue-500 text-sm py-1.5"
+      >
+        {isPending && (
+          <option value="" disabled>Select status</option>
+        )}
+        <option value="successful" className="bg-gray-100 text-gray-900">Successful</option>
+        <option value="unsuccessful" className="bg-gray-100 text-gray-900">Unsuccessful</option>
+        <option value="cancelled" className="bg-gray-100 text-gray-900">Cancelled</option>
+      </select>
+    );
+  };
   
   // Update meeting link handler
   const handleUpdateMeetingLink = async (sessionId: string, link: string) => {
