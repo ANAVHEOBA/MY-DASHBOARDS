@@ -290,6 +290,7 @@ const StatusSelect = ({ session }: { session: Session }) => (
       text-gray-900 font-medium shadow-sm focus:border-blue-500 
       focus:ring-blue-500 text-sm py-1.5"
   >
+    <option value="" disabled>Select status</option>
     <option value="successful" className="bg-gray-100 text-gray-900">Successful</option>
     <option value="unsuccessful" className="bg-gray-100 text-gray-900">Unsuccessful</option>
     <option value="cancelled" className="bg-gray-100 text-gray-900">Cancelled</option>
