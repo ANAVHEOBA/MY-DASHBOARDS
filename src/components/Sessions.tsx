@@ -121,6 +121,9 @@ const StatusBadge: React.FC<{ status: Session['status'] }> = ({ status }) => {
   );
 };
 
+
+
+
 const Sessions: React.FC = () => {
   // State Management
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -230,8 +233,8 @@ const Sessions: React.FC = () => {
 
   // FOR ADMINS TO UPDATE
   const handleUpdateStatus = async (sessionId: string, newStatus: 'successful' | 'unsuccessful' | 'cancelled') => {
-    // Add confirmation dialog
-    const confirmMessage = `Are you sure you want to mark this session as ${newStatus}?`;
+    // Add confirmation dialog with warning icon and status-specific message
+    const confirmMessage = `⚠️ Warning: Are you sure you want to mark this session as "${newStatus}"?\n\nThis action cannot be undone.`;
     if (!window.confirm(confirmMessage)) {
       // Reset the select element to its previous value
       const session = sessions.find(s => s._id === sessionId);
@@ -243,6 +246,7 @@ const Sessions: React.FC = () => {
       }
       return;
     }
+  
     try {
       const response = await fetch(`${API_URL}/sessions/${sessionId}/update-status`, {
         method: 'PATCH',
@@ -276,6 +280,21 @@ const Sessions: React.FC = () => {
     alert('Failed to update session status. Please try again.');
   }
 };
+
+const StatusSelect = ({ session }: { session: Session }) => (
+  <select
+    value={session.status}
+    data-session-id={session._id}
+    onChange={(e) => handleUpdateStatus(session._id, e.target.value as Session['status'])}
+    className="block w-32 rounded-md border-gray-300 bg-gray-100 
+      text-gray-900 font-medium shadow-sm focus:border-blue-500 
+      focus:ring-blue-500 text-sm py-1.5"
+  >
+    <option value="successful" className="bg-gray-100 text-gray-900">Successful</option>
+    <option value="unsuccessful" className="bg-gray-100 text-gray-900">Unsuccessful</option>
+    <option value="cancelled" className="bg-gray-100 text-gray-900">Cancelled</option>
+  </select>
+);
   
   // Update meeting link handler
   const handleUpdateMeetingLink = async (sessionId: string, link: string) => {
@@ -389,7 +408,12 @@ const Sessions: React.FC = () => {
     <div key={session._id} className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
       <div className="flex justify-between items-start mb-3">
         <div>
-          <h3 className="font-medium text-gray-900">{session.user.name}</h3>
+          <h3 className="font-medium text-gray-900">
+            {session.user?.name || 
+             `${session.user?.firstName || ''} ${session.user?.lastName || ''}` ||
+             session.user?.email ||
+             'Unknown User'}
+          </h3>
           <p className="text-sm text-gray-500">
             {new Date(session.time).toLocaleDateString()}
           </p>
@@ -413,126 +437,120 @@ const Sessions: React.FC = () => {
           <Calendar className="h-4 w-4 mr-2" />
           <span>{session.topic}</span>
         </div>
+        {session.comment && (
+          <div className="flex items-start">
+            <Edit2 className="h-4 w-4 mr-2 mt-1" />
+            <span className="text-gray-500 italic">{session.comment}</span>
+          </div>
+        )}
       </div>
   
-      <div className="mt-4 flex justify-between items-center">
-        {session.meetingLink && (
-          <a 
-            href={session.meetingLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center text-blue-500 hover:text-blue-700"
-          >
-            <Video className="h-4 w-4 mr-1" />
-            <span>Join Meet</span>
-          </a>
-        )}
-        <div className="flex space-x-3">
+      <div className="mt-4 space-y-3">
+        {/* Meeting Link Section */}
+        <div className="flex justify-between items-center">
+          {session.meetingLink && (
+            <a 
+              href={session.meetingLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center text-blue-500 hover:text-blue-700"
+            >
+              <Video className="h-4 w-4 mr-1" />
+              <span>Join Meet</span>
+            </a>
+          )}
           <button 
-            className="text-yellow-500 hover:text-yellow-700"
+            className="text-yellow-500 hover:text-yellow-700 p-2 rounded-full hover:bg-yellow-50"
             onClick={() => {
               setSelectedSessionId(session._id);
               setMeetingLink(session.meetingLink || '');
               setShowLinkModal(true);
             }}
+            title="Edit Meeting Link"
           >
-            <Video className="h-5 w-5" />
+            <Edit2 className="h-5 w-5" />
           </button>
         </div>
-        <select
-  value={session.status}
-  data-session-id={session._id} // Add this line
-  onChange={(e) => handleUpdateStatus(session._id, e.target.value as Session['status'])}
-  className="ml-2 block w-32 rounded-md border-gray-300 bg-gray-100 
-    text-gray-900 font-medium shadow-sm focus:border-blue-500 
-    focus:ring-blue-500 text-sm py-1.5"
->
-  <option value="successful" className="bg-gray-100 text-gray-900">Successful</option>
-  <option value="unsuccessful" className="bg-gray-100 text-gray-900">Unsuccessful</option>
-  <option value="cancelled" className="bg-gray-100 text-gray-900">Cancelled</option>
-</select>
+  
+        {/* Status Selection Section */}
+        <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+          <span className="text-sm font-medium text-gray-500">Update Status:</span>
+          <StatusSelect 
+            session={session} 
+          />
+        </div>
       </div>
     </div>
   );
 
+
   // Table renderer
-  const renderTable = () => (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('user')}>User</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('listener')}>Listener</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('time')}>Time</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('topic')}>Topic</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {filteredSessions.map((session: Session) => (
-            <tr key={session._id}>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+const renderTable = () => (
+  <div className="overflow-x-auto">
+    <table className="min-w-full divide-y divide-gray-200">
+      <thead className="bg-gray-50">
+        <tr>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('user')}>User</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('listener')}>Listener</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('time')}>Time</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('topic')}>Topic</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+        </tr>
+      </thead>
+      <tbody className="bg-white divide-y divide-gray-200">
+        {filteredSessions.map((session: Session) => (
+          <tr key={session._id}>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
               {/* Add fallback options for different name fields */}
               {session.user?.name || 
                `${session.user?.firstName || ''} ${session.user?.lastName || ''}` ||
                session.user?.email ||
                'Unknown User'}
             </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{session.listener.name}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {new Date(session.time).toLocaleString()}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{session.topic}</td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <ProgressBadge progress={getSessionProgress(session.time)} />
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <StatusBadge status={session.status} />
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                <div className="flex space-x-2 items-center">
-                  {session.meetingLink && (
-                    <a
-                      href={session.meetingLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-900"
-                    >
-                      <Video className="h-5 w-5" />
-                    </a>
-                  )}
-                  <button
-                    onClick={() => {
-                      setSelectedSessionId(session._id);
-                      setMeetingLink(session.meetingLink || '');
-                      setShowLinkModal(true);
-                    }}
-                    className="text-yellow-600 hover:text-yellow-900"
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{session.listener.name}</td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              {new Date(session.time).toLocaleString()}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{session.topic}</td>
+            <td className="px-6 py-4 whitespace-nowrap">
+              <ProgressBadge progress={getSessionProgress(session.time)} />
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap">
+              <StatusBadge status={session.status} />
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+              <div className="flex space-x-2 items-center">
+                {session.meetingLink && (
+                  <a
+                    href={session.meetingLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-900"
                   >
-                    <Edit2 className="h-5 w-5" />
-                  </button>
-                  <select
-  value={session.status}
-  data-session-id={session._id} // Add this line
-  onChange={(e) => handleUpdateStatus(session._id, e.target.value as Session['status'])}
-  className="block w-32 rounded-md border-gray-300 bg-gray-100 
-    text-gray-900 font-medium shadow-sm focus:border-blue-500 
-    focus:ring-blue-500 text-sm py-1.5"
->
-  <option value="successful" className="bg-gray-100 text-gray-900">Successful</option>
-  <option value="unsuccessful" className="bg-gray-100 text-gray-900">Unsuccessful</option>
-  <option value="cancelled" className="bg-gray-100 text-gray-900">Cancelled</option>
-</select>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+                    <Video className="h-5 w-5" />
+                  </a>
+                )}
+                <button
+                  onClick={() => {
+                    setSelectedSessionId(session._id);
+                    setMeetingLink(session.meetingLink || '');
+                    setShowLinkModal(true);
+                  }}
+                  className="text-yellow-600 hover:text-yellow-900"
+                >
+                  <Edit2 className="h-5 w-5" />
+                </button>
+                <StatusSelect session={session} />
+              </div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+);
 
   // Dark themed modal renderer
   const renderLinkModal = () => (
