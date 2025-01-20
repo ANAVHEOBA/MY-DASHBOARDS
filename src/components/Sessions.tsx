@@ -140,6 +140,7 @@ const Sessions: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState('time'); // Default sorting field
   const [sortOrder, setSortOrder] = useState('asc'); // Default sorting order
+  const [selectedStatuses, setSelectedStatuses] = useState<Record<string, boolean>>({});
 
   // Fetch Sessions function
   const fetchSessions = async () => {
@@ -283,14 +284,21 @@ const Sessions: React.FC = () => {
 
 const StatusSelect = ({ session }: { session: Session }) => (
   <select
-    value={session.status}
+    value={selectedStatuses[session._id] ? session.status : ''}
     data-session-id={session._id}
-    onChange={(e) => handleUpdateStatus(session._id, e.target.value as Session['status'])}
+    onChange={(e) => {
+      const newStatus = e.target.value as Session['status'];
+      setSelectedStatuses(prev => ({
+        ...prev,
+        [session._id]: true
+      }));
+      handleUpdateStatus(session._id, newStatus);
+    }}
     className="block w-32 rounded-md border-gray-300 bg-gray-100 
       text-gray-900 font-medium shadow-sm focus:border-blue-500 
       focus:ring-blue-500 text-sm py-1.5"
   >
-    <option value="" disabled>Select status</option>
+    <option value="" disabled selected>Select status</option>
     <option value="successful" className="bg-gray-100 text-gray-900">Successful</option>
     <option value="unsuccessful" className="bg-gray-100 text-gray-900">Unsuccessful</option>
     <option value="cancelled" className="bg-gray-100 text-gray-900">Cancelled</option>
