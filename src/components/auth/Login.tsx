@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
-
-const API_URI = 'https://ready-back-end.onrender.com';
+import { API_URL } from '@/config/api';
 
 interface LoginProps {
   onSuccess: () => void;
@@ -36,7 +35,7 @@ export default function Login({ onSuccess }: LoginProps) {
     setAlert({ type: null, text: '' });
 
     try {
-      const response = await fetch(`${API_URI}/admin/auth`, {
+      const response = await fetch(`${API_URL}/admin/auth`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),

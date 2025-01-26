@@ -12,6 +12,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { getAuthHeaders, handleUnauthorized } from '../utils/api';
+import { API_URL } from '@/config/api';
 
 interface User {
   _id: string;
@@ -44,8 +45,6 @@ type SessionProgress = 'scheduled' | 'ongoing' | 'completed';
 
 
 type SessionStatus = 'successful' | 'unsuccessful' | 'cancelled' | 'pending';
-
-const API_URL = 'https://ready-back-end.onrender.com';
 
 const getSessionProgress = (sessionTime: string): SessionProgress => {
   const sessionDate = new Date(sessionTime);

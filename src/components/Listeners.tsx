@@ -3,8 +3,7 @@ import { Search, Plus, Eye, Edit2, XCircle, X, RefreshCw, MessageCircle } from '
 import { Listener, FormErrors, Message, TimeSlot } from '../types/listener';
 import { DAYS_OF_WEEK, DEFAULT_TIME_SLOTS, GENDERS } from '../constants/listener';
 import { getAuthHeaders, handleUnauthorized } from '../utils/api';
-
-const API_URL = 'https://ready-back-end.onrender.com';
+import { API_URL } from '@/config/api';
 
 const Listeners: React.FC = (): JSX.Element => {
   // State Management

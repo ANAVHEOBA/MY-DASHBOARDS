@@ -3,8 +3,7 @@ import { Lock, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { getAuthHeaders, handleUnauthorized } from '../utils/api';
-
-const API_URI = 'https://ready-back-end.onrender.com';
+import { API_URL } from '@/config/api';
 
 const Settings: React.FC = () => {
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -52,7 +51,7 @@ const Settings: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URI}/admin/change-password`, {
+      const response = await fetch(`${API_URL}/admin/change-password`, {
         method: 'PATCH',
         headers: getAuthHeaders(),
         body: JSON.stringify({

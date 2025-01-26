@@ -2,8 +2,7 @@ import { Listener, ApiResponse } from '../types/listener';
 // Remove the import of API_URL
 // import { API_URL } from '../config/api';
 import { fetchWithRetry } from '../lib/utils';
-
-const API_URL = 'https://ready-back-end.onrender.com'; 
+import { API_URL } from '@/config/api';
 
 const defaultHeaders = {
   'Content-Type': 'application/json',

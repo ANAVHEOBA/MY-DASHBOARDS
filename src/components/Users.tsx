@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Eye } from 'lucide-react';
 import { getAuthHeaders, handleUnauthorized } from '../utils/api';
-
-const API_URL = 'https://ready-back-end.onrender.com';
+import { API_URL } from '@/config/api';
 
 interface User {
   _id: string;
