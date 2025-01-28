@@ -2,10 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { Search, Plus, Eye, Edit2, XCircle, X, RefreshCw, MessageCircle } from 'lucide-react';
 import { Listener, FormErrors, Message, TimeSlot } from '../types/listener';
 import { DAYS_OF_WEEK, DEFAULT_TIME_SLOTS, GENDERS } from '../constants/listener';
-import { getAuthHeaders, handleUnauthorized } from '../utils/api';
+import { getAuthHeaders, handleUnauthorized, validateToken } from '../utils/api';
 import { API_URL } from '@/config/api';
 
+
+
+
 const Listeners: React.FC = (): JSX.Element => {
+
+
+  useEffect(() => {
+    validateToken();
+  }, []);
+
   // State Management
   const [listeners, setListeners] = useState<Listener[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -26,6 +35,8 @@ const Listeners: React.FC = (): JSX.Element => {
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [listenerSessions, setListenerSessions] = useState<any[]>([]);
   const [availableDays, setAvailableDays] = useState<Set<string>>(new Set(DAYS_OF_WEEK));
+
+  
 
   // Sorting state
   const [sortBy, setSortBy] = useState('name');
@@ -58,6 +69,8 @@ const Listeners: React.FC = (): JSX.Element => {
 
   // Fetch Listeners
   const fetchListeners = async () => {
+    if (!validateToken()) return;
+  
     try {
       setIsLoading(true);
       const response = await fetch(`${API_URL}/listeners?sortBy=${sortBy}&sortOrder=${sortOrder}`, {
@@ -67,6 +80,7 @@ const Listeners: React.FC = (): JSX.Element => {
       if (response.status === 401) {
         return handleUnauthorized(response);
       }
+  
       const data = await response.json();
       
       if (!response.ok) {
@@ -89,13 +103,20 @@ const Listeners: React.FC = (): JSX.Element => {
 
   // Fetch Listener Details
   const fetchListenerDetails = async (listenerId: string) => {
+    if (!validateToken()) return;
+  
     try {
       setIsLoading(true);
       const response = await fetch(`${API_URL}/listeners/${listenerId}`, {
         headers: getAuthHeaders()
       });
+  
+      if (response.status === 401) {
+        return handleUnauthorized(response);
+      }
+  
       const data = await response.json();
-
+  
       if (!response.ok) {
         throw new Error(data.message || 'Failed to fetch listener details');
       }
@@ -113,12 +134,19 @@ const Listeners: React.FC = (): JSX.Element => {
 
   // Fetch Listener Sessions
   const fetchListenerSessions = async (listenerId: string) => {
+    if (!validateToken()) return;
+  
     try {
       const response = await fetch(`${API_URL}/sessions/listener/${listenerId}/sessions`, {
         headers: getAuthHeaders()
       });
+  
+      if (response.status === 401) {
+        return handleUnauthorized(response);
+      }
+  
       const data = await response.json();
-
+  
       if (!response.ok) {
         throw new Error(data.message || 'Failed to fetch listener sessions');
       }
@@ -132,20 +160,23 @@ const Listeners: React.FC = (): JSX.Element => {
 
   // Fetch Messages for Listener
   const fetchMessagesForListener = async (listenerId?: string) => {
-    if (!listenerId) {
-      console.error('No listener ID provided');
-      return;
-    }
-
+    if (!validateToken() || !listenerId) return;
+  
     try {
       const response = await fetch(`${API_URL}/listeners/${listenerId}/messages`, {
         headers: getAuthHeaders()
       });
+  
+      if (response.status === 401) {
+        return handleUnauthorized(response);
+      }
+  
       const data = await response.json();
-
+  
       if (!response.ok) {
         throw new Error(data.message || 'Failed to fetch messages');
       }
+      
 
       setMessages(data.messages);
     } catch (error) {
@@ -156,8 +187,8 @@ const Listeners: React.FC = (): JSX.Element => {
 
   // Send Message to Listener
   const sendMessageToListener = async () => {
-    if (!selectedListener) return;
-
+    if (!validateToken() || !selectedListener) return;
+  
     try {
       const response = await fetch(`${API_URL}/listeners/${selectedListener._id}/messages`, {
         method: 'POST',
@@ -168,9 +199,13 @@ const Listeners: React.FC = (): JSX.Element => {
           priority: messagePriority,
         }),
       });
-
+  
+      if (response.status === 401) {
+        return handleUnauthorized(response);
+      }
+  
       const data = await response.json();
-
+  
       if (!response.ok) {
         throw new Error(data.message || 'Failed to send message');
       }
@@ -188,12 +223,18 @@ const Listeners: React.FC = (): JSX.Element => {
 
   // Export Listeners
   const exportListeners = async () => {
+    if (!validateToken()) return;
+  
     try {
       const response = await fetch(`${API_URL}/listeners/export`, {
         method: 'GET',
         headers: getAuthHeaders(),
       });
-
+  
+      if (response.status === 401) {
+        return handleUnauthorized(response);
+      }
+  
       if (!response.ok) {
         throw new Error('Failed to export listeners');
       }
@@ -501,8 +542,9 @@ const addTimeSlot = (dayOfWeek: string) => {
     : [];
 
   // Refresh function
-  const refreshListeners = async () => {
-    await fetchListeners();
+  const refreshListeners = () => {
+    if (!validateToken()) return;
+    fetchListeners();
   };
 
 
@@ -591,10 +633,13 @@ const addTimeSlot = (dayOfWeek: string) => {
 
     {/* Loading and Error States */}
     {isLoading ? (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
-      </div>
-    ) : error ? (
+  <div className="flex justify-center items-center min-h-[400px]">
+    <div className="relative">
+      <div className="w-12 h-12 rounded-full border-4 border-gray-200"></div>
+      <div className="w-12 h-12 rounded-full border-4 border-red-500 border-t-transparent animate-spin absolute top-0 left-0"></div>
+    </div>
+  </div>
+) : error ? (
       <div className="text-center text-red-500 py-8">{error}</div>
     ) : (
       <>

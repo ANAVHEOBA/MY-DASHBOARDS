@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Eye } from 'lucide-react';
-import { getAuthHeaders, handleUnauthorized } from '../utils/api';
+import { getAuthHeaders, handleUnauthorized, validateToken } from '../utils/api';
 import { API_URL } from '@/config/api';
 
 interface User {
@@ -51,6 +51,8 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ userId, onClose }) 
 
   useEffect(() => {
     const fetchUserDetails = async () => {
+      if (!validateToken()) return;
+
       try {
         setIsLoading(true);
         const response = await fetch(`${API_URL}/users/${userId}`, {
@@ -76,6 +78,8 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ userId, onClose }) 
     };
 
     const fetchUserSessions = async () => {
+      if (!validateToken()) return;
+
       try {
         const response = await fetch(`${API_URL}/sessions/user/${userId}/sessions`, {
           headers: getAuthHeaders()
@@ -127,7 +131,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ userId, onClose }) 
     );
   }
 
-  // ... rest of the code remains the same ...
+ 
 
 return (
   <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
@@ -267,6 +271,10 @@ return (
 };
 
 const Users: React.FC = () => {
+
+  useEffect(() => {
+    validateToken();
+  }, []);
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
@@ -280,6 +288,8 @@ const Users: React.FC = () => {
   const [sortOrder, setSortOrder] = useState('asc'); // Default sorting order
 
   const fetchUsers = async () => {
+    if (!validateToken()) return;
+
     try {
       setIsLoading(true);
       const skip = (currentPage - 1) * usersPerPage;
@@ -332,6 +342,8 @@ const Users: React.FC = () => {
   };
 
   const exportUsers = async () => {
+    if (!validateToken()) return;
+
     try {
       const response = await fetch(`${API_URL}/users/export`, {
         method: 'GET',
@@ -455,10 +467,13 @@ const Users: React.FC = () => {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center items-center h-48">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500" />
-        </div>
-      ) : error ? (
+  <div className="flex justify-center items-center min-h-[400px]">
+    <div className="relative">
+      <div className="w-12 h-12 rounded-full border-4 border-gray-200"></div>
+      <div className="w-12 h-12 rounded-full border-4 border-red-500 border-t-transparent animate-spin absolute top-0 left-0"></div>
+    </div>
+  </div>
+) : error ? (
         <div className="p-4 text-red-500 text-center">
           {error}
         </div>
