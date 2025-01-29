@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
+import { Eye, EyeOff } from 'lucide-react';
 import { API_URL } from '@/config/api';
 
 interface RegisterProps {
@@ -17,6 +18,8 @@ interface AlertMessage {
 export default function Register({ onSuccess }: RegisterProps) {
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState<AlertMessage>({ type: null, text: '' });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -123,25 +126,51 @@ export default function Register({ onSuccess }: RegisterProps) {
             required
           />
           
-          <Input
-            type="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            className="text-gray-900 placeholder:text-gray-500"
-            required
-            minLength={6}
-          />
+          <div className="relative">
+            <Input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              className="text-gray-900 placeholder:text-gray-500 pr-10"
+              required
+              minLength={6}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            >
+              {showPassword ? (
+                <EyeOff className="h-5 w-5" />
+              ) : (
+                <Eye className="h-5 w-5" />
+              )}
+            </button>
+          </div>
           
-          <Input
-            type="password"
-            placeholder="Confirm Password"
-            value={formData.confirmPassword}
-            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-            className="text-gray-900 placeholder:text-gray-500"
-            required
-            minLength={6}
-          />
+          <div className="relative">
+            <Input
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="Confirm Password"
+              value={formData.confirmPassword}
+              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+              className="text-gray-900 placeholder:text-gray-500 pr-10"
+              required
+              minLength={6}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            >
+              {showConfirmPassword ? (
+                <EyeOff className="h-5 w-5" />
+              ) : (
+                <Eye className="h-5 w-5" />
+              )}
+            </button>
+          </div>
         </div>
         
         <Button 

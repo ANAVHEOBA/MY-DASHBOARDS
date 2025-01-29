@@ -12,3 +12,12 @@ export const handleUnauthorized = (error: any) => {
   }
   return error;
 };
+
+export const validateToken = () => {
+  const token = getAuthToken();
+  if (!token) {
+    window.location.href = '/auth';
+    return false;
+  }
+  return true;
+};
