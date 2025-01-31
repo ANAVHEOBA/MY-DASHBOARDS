@@ -11,7 +11,7 @@ import {
   Headphones,
   RefreshCw
 } from 'lucide-react';
-import { getAuthHeaders, handleUnauthorized } from '../utils/api';
+import { getAuthHeaders, handleUnauthorized, validateToken } from '../utils/api';
 import { API_URL } from '@/config/api';
 
 interface User {
@@ -128,6 +128,11 @@ const StatusBadge: React.FC<{ status: Session['status'] }> = ({ status }) => {
 
 
 const Sessions: React.FC = () => {
+
+  useEffect(() => {
+    validateToken();
+  }, []);
+
   // State Management
   const [sessions, setSessions] = useState<Session[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -147,25 +152,23 @@ const Sessions: React.FC = () => {
 
   // Fetch Sessions function
   const fetchSessions = async () => {
+    if (!validateToken()) return;
+  
     try {
       setIsLoading(true);
-      const skip = (currentPage - 1) * sessionsPerPage;
-      const response = await fetch(
-        `${API_URL}/sessions/platform/all?limit=${sessionsPerPage}&skip=${skip}&sortBy=${sortBy}&sortOrder=${sortOrder}`,
-        {
-          headers: getAuthHeaders()
-        }
-      );
-      
+      const response = await fetch(`${API_URL}/sessions/platform/all?page=${currentPage}&limit=${sessionsPerPage}&sortBy=${sortBy}&sortOrder=${sortOrder}`, {
+        headers: getAuthHeaders()
+      });
+  
       if (response.status === 401) {
         return handleUnauthorized(response);
       }
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch sessions');
-      }
-
+  
       const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to fetch sessions');
+      }
+      
       console.log('Raw API Response:', data); // Add this line
     console.log('First session example:', data.sessions?.[0]); // Add this line
       console.log('Raw session data:', data);
@@ -237,6 +240,8 @@ const Sessions: React.FC = () => {
 
   // FOR ADMINS TO UPDATE
   const handleUpdateStatus = async (sessionId: string, newStatus: SessionStatus) => {
+
+    if (!validateToken()) return;
     // Add confirmation dialog with warning icon and status-specific message
     const session = sessions.find(s => s._id === sessionId);
     
@@ -352,6 +357,7 @@ const Sessions: React.FC = () => {
   
   // Update meeting link handler
   const handleUpdateMeetingLink = async (sessionId: string, link: string) => {
+    if (!validateToken()) return;
     try {
       console.log('Updating meeting link for session:', sessionId, 'with link:', link);
   
@@ -392,6 +398,7 @@ const Sessions: React.FC = () => {
 
   // Add comment handler
   const handleAddComment = async (sessionId: string, comment: string) => {
+    if (!validateToken()) return;
     try {
       const response = await fetch(`${API_URL}/sessions/${sessionId}/comment`, {
         method: 'PATCH',
@@ -427,6 +434,7 @@ const Sessions: React.FC = () => {
 
   // Export Sessions function
   const exportSessions = async () => {
+    if (!validateToken()) return;
     try {
       const response = await fetch(`${API_URL}/sessions/export`, {
         method: 'GET',
@@ -680,104 +688,106 @@ const renderTable = () => (
   );
 
   // Main return
-  return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      // Updated header section
-<div className="sm:flex sm:items-center justify-between mb-6">
-  <div className="sm:flex-auto">
-    <h1 className="text-xl font-semibold text-gray-900">Sessions</h1>
-  </div>
+return (
+  <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {/* Header section */}
+    <div className="sm:flex sm:items-center justify-between mb-6">
+      <div className="sm:flex-auto">
+        <h1 className="text-xl font-semibold text-gray-900">Sessions</h1>
+      </div>
 
-  <div className="mt-4 sm:mt-0 sm:flex items-center space-x-4">
-    {/* Refresh Button */}
-    <RefreshButton 
-      onClick={() => {
-        setCurrentPage(1);
-        fetchSessions();
-      }}
-      isLoading={isLoading}
-    />
-
-
-
+      <div className="mt-4 sm:mt-0 sm:flex items-center space-x-4">
+        {/* Refresh Button */}
+        <RefreshButton 
+          onClick={() => {
+            setCurrentPage(1);
+            fetchSessions();
+          }}
+          isLoading={isLoading}
+        />
         
         {/* Search Input */}
-    <div className="relative w-64">
-      <input
-        type="text"
-        className="w-full focus:ring-blue-500 focus:border-blue-500 block pr-10 
-          sm:text-sm border-gray-300 rounded-lg"
-        placeholder="Search sessions..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
-      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-        <Search className="h-5 w-5 text-gray-400" />
+        <div className="relative w-64">
+          <input
+            type="text"
+            className="w-full focus:ring-blue-500 focus:border-blue-500 block pr-10 
+              sm:text-sm border-gray-300 rounded-lg"
+            placeholder="Search sessions..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+        </div>
+
+        {/* Export Button */}
+        <button 
+          className="flex items-center justify-center bg-green-500 text-white 
+            px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+          onClick={exportSessions}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          <span>Export Sessions</span>
+        </button>
       </div>
     </div>
 
-    {/* Export Button */}
-    <button 
-      className="flex items-center justify-center bg-green-500 text-white 
-        px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
-      onClick={exportSessions}
-    >
-      <Plus className="h-4 w-4 mr-2" />
-      <span>Export Sessions</span>
-    </button>
-  </div>
-</div>
+    {/* Sorting Options */}
+    <div className="mt-4 flex justify-between items-center">
+      <div className="flex space-x-2">
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="border rounded-lg p-2 bg-white text-gray-800"
+        >
+          <option value="user">User</option>
+          <option value="listener">Listener</option>
+          <option value="time">Time</option>
+          <option value="topic">Topic</option>
+        </select>
+        <select
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value)}
+          className="border rounded-lg p-2 bg-white text-gray-800"
+        >
+          <option value="asc">Ascending</option>
+          <option value="desc">Descending</option>
+        </select>
+        <button
+          onClick={() => {
+            setCurrentPage(1);
+            fetchSessions();
+          }}
+          className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+        >
+          Sort
+        </button>
+      </div>
+    </div>
 
-      {/* Sorting Options */}
-      <div className="mt-4 flex justify-between items-center">
-        <div className="flex space-x-2">
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="border rounded-lg p-2 bg-white text-gray-800"
-          >
-            <option value="user">User</option>
-            <option value="listener">Listener</option>
-            <option value="time">Time</option>
-            <option value="topic">Topic</option>
-          </select>
-          <select
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value)}
-            className="border rounded-lg p-2 bg-white text-gray-800"
-          >
-            <option value="asc">Ascending</option>
-            <option value="desc">Descending</option>
-          </select>
-          <button
-            onClick={() => {
-              setCurrentPage(1); // Reset to first page when sorting changes
-              fetchSessions(); // Fetch sessions with new sorting
-            }}
-            className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-          >
-            Sort
-          </button>
+    {/* Main Content */}
+    <div className="mt-8">
+      {isLoading ? (
+        <div className="flex justify-center items-center min-h-[400px]">
+          <div className="relative">
+            <div className="w-12 h-12 rounded-full border-4 border-gray-200"></div>
+            <div className="w-12 h-12 rounded-full border-4 border-red-500 border-t-transparent animate-spin absolute top-0 left-0"></div>
+          </div>
         </div>
-      </div>
-
-      <div className="mt-8">
-        {isLoading ? (
-          <div className="text-center">Loading...</div>
-        ) : error ? (
-          <div className="text-center text-red-600">{error}</div>
-        ) : (
-          <>
-            <div className="hidden sm:block">
-              {renderTable()}
-            </div>
-            <div className="sm:hidden space-y-4">
-              {filteredSessions.map(renderMobileCard)}
-            </div>
-            {showLinkModal && renderLinkModal()}
-          </>
-        )}
-      </div>
+      ) : error ? (
+        <div className="text-center text-red-600">{error}</div>
+      ) : (
+        <>
+          <div className="hidden sm:block">
+            {renderTable()}
+          </div>
+          <div className="sm:hidden space-y-4">
+            {filteredSessions.map(renderMobileCard)}
+          </div>
+          {showLinkModal && renderLinkModal()}
+        </>
+      )}
 
       {/* Pagination */}
       <div className="mt-4 flex justify-center">
@@ -798,7 +808,9 @@ const renderTable = () => (
         </nav>
       </div>
     </div>
-  );
-};
+  </div>
+); 
+
+}; 
 
 export default Sessions;

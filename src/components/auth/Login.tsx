@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
+import { Eye, EyeOff } from 'lucide-react';
 import { API_URL } from '@/config/api';
 
 interface LoginProps {
@@ -16,6 +17,7 @@ interface AlertMessage {
 
 export default function Login({ onSuccess }: LoginProps) {
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [alert, setAlert] = useState<AlertMessage>({ type: null, text: '' });
   const [formData, setFormData] = useState({
     email: '',
@@ -89,24 +91,41 @@ export default function Login({ onSuccess }: LoginProps) {
             required
           />
           
-          <Input
-            type="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            className="text-gray-900 placeholder:text-gray-500"
-            required
-          />
+          <div className="relative">
+            <Input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              className="text-gray-900 placeholder:text-gray-500 pr-10"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            >
+              {showPassword ? (
+                <EyeOff className="h-5 w-5" />
+              ) : (
+                <Eye className="h-5 w-5" />
+              )}
+            </button>
+          </div>
         </div>
         
         <Button 
           type="submit" 
           disabled={loading} 
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+          className="w-full bg-red-600 hover:bg-red-700 text-white"
         >
           {loading ? 'Logging in...' : 'Login'}
         </Button>
       </form>
+
+      <div className="text-sm text-center text-gray-600">
+        <p>Don't have an account? Contact administrator</p>
+      </div>
     </div>
   );
 }

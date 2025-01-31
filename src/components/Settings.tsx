@@ -1,19 +1,30 @@
-import React, { useState } from 'react';
-import { Lock, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Lock, ChevronDown, ChevronUp, Eye, EyeOff } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { getAuthHeaders, handleUnauthorized } from '../utils/api';
+import { getAuthHeaders, handleUnauthorized, validateToken } from '../utils/api';
 import { API_URL } from '@/config/api';
 
 const Settings: React.FC = () => {
+  useEffect(() => {
+    validateToken();
+  }, []);
+
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>('security');
   const [loading, setLoading] = useState(false);
+  
+  // Add password visibility states
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
   const [passwordFormData, setPasswordFormData] = useState({
     oldPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
+
   const [alert, setAlert] = useState<{ type: 'success' | 'error' | null; message: string }>({
     type: null,
     message: ''
@@ -31,6 +42,7 @@ const Settings: React.FC = () => {
   };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
+    if (!validateToken()) return;
     e.preventDefault();
     
     if (passwordFormData.newPassword !== passwordFormData.confirmPassword) {
@@ -73,6 +85,10 @@ const Settings: React.FC = () => {
       showAlert('success', 'Password changed successfully');
       setShowChangePassword(false);
       setPasswordFormData({ oldPassword: '', newPassword: '', confirmPassword: '' });
+      // Reset password visibility states
+      setShowOldPassword(false);
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
     } catch (err) {
       showAlert('error', err instanceof Error ? err.message : 'Failed to change password');
     } finally {
@@ -128,53 +144,92 @@ const Settings: React.FC = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Current Password
                       </label>
-                      <Input
-                        type="password"
-                        value={passwordFormData.oldPassword}
-                        onChange={(e) => setPasswordFormData({ 
-                          ...passwordFormData, 
-                          oldPassword: e.target.value 
-                        })}
-                        placeholder="Enter your current password"
-                        className="bg-white border-gray-300 text-gray-900"
-                        required
-                      />
+                      <div className="relative">
+                        <Input
+                          type={showOldPassword ? "text" : "password"}
+                          value={passwordFormData.oldPassword}
+                          onChange={(e) => setPasswordFormData({ 
+                            ...passwordFormData, 
+                            oldPassword: e.target.value 
+                          })}
+                          placeholder="Enter your current password"
+                          className="bg-white border-gray-300 text-gray-900 pr-10"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowOldPassword(!showOldPassword)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        >
+                          {showOldPassword ? (
+                            <EyeOff className="h-5 w-5" />
+                          ) : (
+                            <Eye className="h-5 w-5" />
+                          )}
+                        </button>
+                      </div>
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         New Password
                       </label>
-                      <Input
-                        type="password"
-                        value={passwordFormData.newPassword}
-                        onChange={(e) => setPasswordFormData({ 
-                          ...passwordFormData, 
-                          newPassword: e.target.value 
-                        })}
-                        placeholder="Enter new password"
-                        className="bg-white border-gray-300 text-gray-900"
-                        required
-                        minLength={6}
-                      />
+                      <div className="relative">
+                        <Input
+                          type={showNewPassword ? "text" : "password"}
+                          value={passwordFormData.newPassword}
+                          onChange={(e) => setPasswordFormData({ 
+                            ...passwordFormData, 
+                            newPassword: e.target.value 
+                          })}
+                          placeholder="Enter new password"
+                          className="bg-white border-gray-300 text-gray-900 pr-10"
+                          required
+                          minLength={6}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        >
+                          {showNewPassword ? (
+                            <EyeOff className="h-5 w-5" />
+                          ) : (
+                            <Eye className="h-5 w-5" />
+                          )}
+                        </button>
+                      </div>
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Confirm New Password
                       </label>
-                      <Input
-                        type="password"
-                        value={passwordFormData.confirmPassword}
-                        onChange={(e) => setPasswordFormData({ 
-                          ...passwordFormData, 
-                          confirmPassword: e.target.value 
-                        })}
-                        placeholder="Confirm new password"
-                        className="bg-white border-gray-300 text-gray-900"
-                        required
-                        minLength={6}
-                      />
+                      <div className="relative">
+                        <Input
+                          type={showConfirmPassword ? "text" : "password"}
+                          value={passwordFormData.confirmPassword}
+                          onChange={(e) => setPasswordFormData({ 
+                            ...passwordFormData, 
+                            confirmPassword: e.target.value 
+                          })}
+                          placeholder="Confirm new password"
+                          className="bg-white border-gray-300 text-gray-900 pr-10"
+                          required
+                          minLength={6}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-5 w-5" />
+                          ) : (
+                            <Eye className="h-5 w-5" />
+                          )}
+                        </button>
+                      </div>
                     </div>
 
                     <div className="flex gap-4 pt-2">
@@ -190,6 +245,9 @@ const Settings: React.FC = () => {
                         onClick={() => {
                           setShowChangePassword(false);
                           setPasswordFormData({ oldPassword: '', newPassword: '', confirmPassword: '' });
+                          setShowOldPassword(false);
+                          setShowNewPassword(false);
+                          setShowConfirmPassword(false);
                         }}
                         variant="outline"
                         className="flex-1"
